@@ -37,29 +37,27 @@ Y = iris.target
 
 model = LogisticRegression(C=1e5)
 model.fit(X, Y)
-
+ 
 
 # Put the result into a color plot
-plt.figure(1, figsize=(4, 3))
 plt.scatter(X[:, 0], X[:, 1], c=Y, edgecolors='k', cmap=plt.cm.Paired)
 
-plt.xlabel('Sepal length')
-plt.ylabel('Sepal width')
+# multiple assignment
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
 y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
 plt.xlim(x_min, x_max)
 plt.ylim(y_min, y_max)
+plt.xlabel('Sepal length')
+plt.ylabel('Sepal width')
 
 # now color it:
-h = .02  # step size in the mesh
+h = 0.02  # step size in the mesh
 
 # try: np.meshgrid([1,2,3,4],[1,2,3,4])
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 # try: np.c_[[1,1,1,1],[2,2,2,2]]
 X_mesh = np.c_[xx.ravel(), yy.ravel()]
-
 Z = model.predict(X_mesh)
-    
 Z = Z.reshape(xx.shape)
 
 plt.pcolormesh(xx, yy, Z, cmap=plt.cm.Paired)
@@ -69,6 +67,16 @@ plt.show()
 
 
 # other classifiers
+
+#############################################################
+from sklearn.svm import SVC
+
+svm=SVC()
+svm.fit(x_train, y_train)
+print(svm.score(x_train, y_train))
+print(svm.score(x_test, y_test))
+
+
 #############################################################
 from sklearn.neighbors import KNeighborsClassifier
 
@@ -99,14 +107,6 @@ print(forest.score(x_test, y_test))
 
 
 #############################################################
-from sklearn.svm import SVC
-
-svm=SVC()
-svm.fit(x_train, y_train)
-print(svm.score(x_train, y_train))
-print(svm.score(x_test, y_test))
-
-#############################################################
 from sklearn.ensemble import GradientBoostingClassifier
 
 gbc = GradientBoostingClassifier(0.01, probability=True)
@@ -123,6 +123,45 @@ print(mlp.score(x_test, y_test))
 
 #############################################################
 from sklearn.multiclass import OneVsRestClassifier
-classifier = OneVsRestClassifier(svm.SVC(kernel='linear', probability=True))
+classifier = OneVsRestClassifier(SVC(kernel='linear', probability=True))
 y_score = classifier.fit(x_train, y_train).decision_function(x_test)
 
+
+
+'''
+    1, you need to know the following classifier and where it from:
+        
+        sklearn.linear_model      --    LogisticRegression
+        sklearn.svm               --    SVC
+        sklearn.neighbors         --    KNeighborsClassifier
+        
+        sklearn.tree              --    DecisionTreeClassifier
+        sklearn.ensemble          --    RandomForestClassifier        
+        sklearn.ensemble          --    GradientBoostingClassifier
+  
+        sklearn.neural_network    --    MLPClassifier
+        sklearn.multiclass        --    OneVsRestClassifier
+        
+    2, you need to those attribute of a classifier:
+        
+        .coef_
+        .intercept_
+        .predict
+        .predict_prob
+        .decision_function
+    
+    3, you need to know to draw the 2D classifier
+    
+    4, details
+        1) For logisticRegression:
+            C
+            
+        2) For SVC
+            C
+            kernel
+            probability
+            
+        3) For KNeighborsClassifier
+            
+        
+'''

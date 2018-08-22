@@ -382,23 +382,3 @@ neural_network    --    MLPClassifier
 
 
 
-
-
-
-
-''' 
-
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import scale
-
-data = dfv[attrs].values
-
-data = scale(data)
-n_c = 6
-model1 = KMeans(n_c)
-model1.fit(data)
-
-cluster_dic={0:'good_cast', 1: 'famous_actor_1', 2:'unpopular', 3:'extrodinary_cast', 4:'famous_director', 5: 'normal', np.nan:'extra'}
-dfv['fl_cluster'] = [cluster_dic[i] for i in model1.labels_]
-
-'''

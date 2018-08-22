@@ -23,6 +23,10 @@ plt.show()
 print(model_1.coef_)
 print(model_1.intercept_)
 
+# l2 loss
+from sklearn.metrics import mean_square_error
+y_pred = model_1.predict(x)
+print(mean_square_error(y_pred, y))
 
 # use PolynomialFeatures to impove the performance
 from sklearn.preprocessing import PolynomialFeatures
@@ -50,13 +54,16 @@ model_1.fit(x_train,y_train)
 print(model_1.score(x_train, y_train))  
 print(model_1.score(x_test, y_test))
 
-x_train, x_test, y_train, y_test = train_test_split(x_new, y, train_size=0.7)
 model_2 = LinearRegression()
 model_2.fit(x_train,y_train)
 print(model_2.score(x_train, y_train))
 print(model_2.score(x_test, y_test))
 
 
+# more about the score:
+# the score is r2_score, it can also calculate in this way:
+from sklearn.metrics import r2_score
+print(r2_score(model_1.predict(x_train), y_train))
 
 
 # for polynomial_regression(pr) use pipeline to create some kind of network:
@@ -95,8 +102,6 @@ ploy = PolynomialFeatures(10, include_bias=False)
 x_new = ploy.fit_transform(x)*(10**(-3))
 x_train, x_test, y_train, y_test = train_test_split(x_new, y, train_size=0.7)
 
-
-
 model_overfit = LinearRegression(fit_intercept=False)  # assume we know y=0 when x=0
 model_overfit.fit(x_train,y_train)
 
@@ -126,3 +131,31 @@ plt.show()
 
 
 
+'''
+    Excercise:
+        1, you need to know following model in sklearn.linear_model:
+            LinearRegression
+            Ridge
+        
+        2, you need to following functions and attributes of a model:
+            .fit
+            .predict
+            .score
+            .coef_
+            .intercept_
+        
+        3, you need to know following param in the model:
+            fit_intercept in LinearRegressino
+            alpha in Ridge
+            
+        4, you need to know how to use PolynomialFeatures in sklearn.preprocessing
+            .fit_transform
+            
+        5, you need to know how to use polynomial regression and how to use Pipeline.
+        
+        6, you need to know how to use train_test_split
+            
+        7, how to score the model
+        
+
+'''

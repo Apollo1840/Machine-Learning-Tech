@@ -59,3 +59,26 @@ from sklearn.preprocessing import Binarizer
 encoder = Binarizer(0.5)
 data2 = encoder.transform(data)
 print(data2)
+
+
+
+
+'''
+    Excercise:
+    1, you need to know following tools, which is in sklearn.preprocessing:
+        StandardScaler, 
+        MinMaxScaler, 
+        Normalizer, 
+        LabelEncoder, 
+        LabelBinarizer
+        Binarizer
+        
+    2, you need to know how to use those tools:
+        .fit, 
+        .transform
+    
+    3, you need to know:
+        1) norm in Normalizer
+        2) Binarizer(0.5)
+
+'''
