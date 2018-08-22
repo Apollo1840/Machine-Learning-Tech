@@ -269,65 +269,13 @@ svm.predict(x_test_scaled[:20])
 svm.predict_proba(x_test_scaled[:20])
 
 
+import pickle
+pickle.dump(model, 'model.pkl')
+model = pickle.load('model.pkl')
 
 
 
-
-
-
-
-
-
-
-
-
-
-# level 3  preprocessing
-##########################################################################
-from sklearn import preprocessing
-import numpy as np
-
-
-# for input-------------------------------------------------------
-# scale data
-x_train_scaled = preprocessing.scale(x_train)
-
-# sometimes we need the scaler for test set and prediction
-scaler = preprocessing.StandardScaler()  # or MinMaxScaler, Normalizer(vector to length 1)
-scaler.fit(x_train)
-x_train_scaled = scaler.transform(x_train)
-
-scaler = preprocessing.Normalizer(normal='l1')
-
-# for output------------------------------------------------------
-# 0,1 labeling
-data = np.random.rand(3,3)
-print(data)
-
-encoder = preprocessing.Binarizer(0.5)
-data2 = encoder.transform(data)
-pirnt(data2)
-
-# labeling
-# setosa -> 0, versicolor -> 1, virginica -> 2
-labels = ['setosa', 'versicolor', 'virginica']
-encoder = preprocessing.LabelEncoder()
-encoder.fit(labels)
-
-type_floor = ['setosa', 'versicolor', 'versicolor', 'virginica','virginica', 'setosa', 'versicolor','versicolor']
-type_floor = encoder.transform(type_floor)
-print(type_floor)
-
-# one-hot 
-import pandas as pd
-pd.get_dummies(df)
-pd.get_dummies(df['...'])
-
-
-
-
-
-# level 4  feature selection
+# level 3 feature selection
 ##########################################################################
 from sklearn.feature_selection import SelectPercentile
 from sklearn.feature_selection import SelectKBest
@@ -346,7 +294,7 @@ x_train = selector.transform(x_train)
 
 
 
-# level 5 ROC analysis
+# level 4 ROC analysis
 ########################################################################
 
 import numpy as np
