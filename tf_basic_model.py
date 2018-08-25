@@ -40,7 +40,7 @@ with tf.name_scope('input'):
 with tf.name_scope('layer_1'):
     nb_n_1 = 500
             
-    with tf.name_scope('weights'):
+    with tf.name_scope('weights'):  # inside namescope, the variable will get its appended name
         w1 = tf.Variable(tf.truncated_normal([n_dim, nb_n_1], stddev = 0.1))
         variable_summaries(w1)
             

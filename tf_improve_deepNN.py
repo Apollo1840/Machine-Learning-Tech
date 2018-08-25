@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-in this py file, I will show how to use regularization term, dropout method
+in this py file, I will show how to use 
+    regularization term, 
+    dropout method
+    Batch norm method
+    
 and a better initialization of weights to easy the gradient vanishing problem
 
 """
@@ -50,7 +54,7 @@ w.append(tf.Variable(tf.random_normal([n[p],n[p-1]])))
 b.append(tf.Variable(tf.zeros([n[p],1])))
 z.append(tf.matmul(w[p],a[p-1])+b[p])
 a.append(tf.nn.tanh(z[p]))
-#a.append(tf.nn.dropout(tf.nn.tanh(z[p]), keep_prob = 0.5))
+# a.append(tf.nn.dropout(tf.nn.tanh(z[p]), keep_prob = 0.5))
 
 p=p+1
 n.append(5)
@@ -61,13 +65,20 @@ w.append(tf.Variable(tf.random_normal([n[p],n[p-1]])*(tf.sqrt(1/n[p-1]))))
 b.append(tf.Variable(tf.zeros([n[p],1])))
 z.append(tf.matmul(w[p],a[p-1])+b[p])
 a.append(tf.nn.tanh(z[p]))
-#a.append(tf.nn.dropout(tf.nn.tanh(z[p]), keep_prob = 0.8))
+# a.append(tf.nn.dropout(tf.nn.tanh(z[p]), keep_prob = 0.8))
 
 p=p+1
 n.append(y_dim)
 w.append(tf.Variable(tf.random_normal([n[p],n[p-1]])))
 b.append(tf.Variable(tf.zeros([n[p],1])))
 z.append(tf.matmul(w[p],a[p-1])+b[p])
+
+# # batch normalization
+# scale = tf.Variable(tf.ones([n[p],1]))
+# shift = tf.Variable(tf.zeros([n[p],1]))
+# fc_mean, fc_var = tf.nn.moments(z[p], axis = 1)
+# z[p] = tf.nn.batch_normalization(z[p], z_mean, z_var, shift, scale, episilon=10e-5)
+
 a.append(z[p])
 
 loss = tf.reduce_mean(tf.square(a[p]-y)/10**3)
@@ -159,4 +170,10 @@ print(x_b.shape)
 
 print(x_b)
 print(y_b)
+
+
+
+# Norm batch
+
+
 
