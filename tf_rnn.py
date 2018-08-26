@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
-# the original code is from https://r2rt.com/recurrent-neural-networks-in-tensorflow-i.html
-# thanks to R2RT and his work.
-# this can be only used to educational purpose, if you want to use it in other situations, please contact R2RT
+'''
+the original code is from https://r2rt.com/recurrent-neural-networks-in-tensorflow-i.html
+thanks to R2RT and his work. It is the best implementation of RNN tutorial I have ever seen.
+this can be only used to educational purpose, if you want to use it in other situations, please contact R2RT
+
+'''
+
 
 import numpy as np
 import tensorflow as tf

@@ -76,6 +76,22 @@ svm.fit(x_train, y_train)
 print(svm.score(x_train, y_train))
 print(svm.score(x_test, y_test))
 
+# adjust the model:
+# Kernel
+svm = SVC(kernel='rbf', gamma=1) # default one, the default gamma is 1/n_features
+
+svm = SVC(kernel='linear')  # most simple one
+svm = SVC(kernel='poly', degree=2)  # polynomial kernel usually used in NLP
+svm = SVC(kernel='sigmoid') 
+
+svm = SVC(kernel= distance_matrix)
+ 
+# strategy
+svm = SVC(shrinking=False)
+
+svm = SVC(probablity = True)  # this is necessary for svc to predict_prob, it will slow down the train and predict 
+
+
 
 #############################################################
 from sklearn.neighbors import KNeighborsClassifier
@@ -150,7 +166,7 @@ y_score = classifier.fit(x_train, y_train).decision_function(x_test)
         .predict_prob
         .decision_function
     
-    3, you need to know to draw the 2D classifier
+    3, you need to know how to draw the 2D classifier
     
     4, details
         1) For logisticRegression:
@@ -162,6 +178,8 @@ y_score = classifier.fit(x_train, y_train).decision_function(x_test)
             probability
             
         3) For KNeighborsClassifier
+    
+    5, you need to know how to use OneVsRestClassifier
             
         
 '''

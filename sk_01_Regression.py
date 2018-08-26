@@ -33,8 +33,23 @@ from sklearn.preprocessing import PolynomialFeatures
 poly = PolynomialFeatures(3,include_bias=False)  # bias means columns with all 1
 x_new = poly.fit_transform(x)
 
-print(poly.fit_transform([[1,5],[3,10]])) # a, b, a**2, ab, b**2, a**3, a**2*b, a*b**2, b**3
 
+# PolynomialFeatures for multiple column:
+poly = PolynomialFeatures(2,include_bias=False) # bias means columns with all 1
+print(poly.fit_transform([[1,5,2],[3,10,4]])) # a, b, c, a**2, ab, ac, b**2, bc, c**2
+
+poly = PolynomialFeatures(3,include_bias=False) 
+print(poly.fit_transform([[1,5,2],[3,10,4]])) # a, b, c, a**2, ab, ac, b**2, bc, c**2, a**3, a**2b, a**2c, ab**2c, abc, ac**2, ... 
+
+# how to use interaction_only
+poly = PolynomialFeatures(2,include_bias=False, interaction_only=True)  
+print(poly.fit_transform([[1,5,2],[3,10,4]])) # a, b, c, ab, ac, bc
+
+poly = PolynomialFeatures(3,include_bias=False, interaction_only=True)  
+print(poly.fit_transform([[1,5,2,1],[3,10,4,1]])) # a, b, c, d, ab, ac, ad, bc, bd, cd, abc, abd, acd, bcd
+
+
+# building polynomial regression by this PolynomialFeatures
 model_2 = LinearRegression(fit_intercept=False)  # assume we know y=0 when x=0
 model_2.fit(x_new,y)
 y_ = model_2.predict(x_new)
@@ -88,10 +103,13 @@ print(pr3.named_steps['lm'].intercept_)
 
 '''
 experience: 
+    
     1. regularization is not the gold finger for overfitting problem. 
         sometimes the model is too bad, so that it is really hard to find the suitable alpha value. 
         it is either too small or too big.
-    2. overfitting often occurs when data amount is less. and the variance is relatively big
+        
+    2. overfitting often occurs when data amount is less. and the variance is relatively big.
+    
 '''
 
 # linear model with penalty on weights (regularization)
@@ -99,7 +117,10 @@ x = np.linspace(-10,10,num=20)[:,None]   # [:,None] make the x.shape to be (30,1
 y = -0.1*x + 0.2*x**2 + 0.3*x**3 + 20*np.random.randn(20,1)
 
 ploy = PolynomialFeatures(10, include_bias=False)  
-x_new = ploy.fit_transform(x)*(10**(-3))
+x_new = ploy.fit_transform(x)
+
+x_new = x_new*(10**(-3)) # this step is important
+
 x_train, x_test, y_train, y_test = train_test_split(x_new, y, train_size=0.7)
 
 model_overfit = LinearRegression(fit_intercept=False)  # assume we know y=0 when x=0
@@ -145,17 +166,23 @@ plt.show()
             .intercept_
         
         3, you need to know following param in the model:
-            fit_intercept in LinearRegressino
+            fit_intercept in LinearRegression
             alpha in Ridge
             
         4, you need to know how to use PolynomialFeatures in sklearn.preprocessing
+            include_bias =
+            interaction_only = 
+        
             .fit_transform
             
         5, you need to know how to use polynomial regression and how to use Pipeline.
         
         6, you need to know how to use train_test_split
+            train_size = 
             
-        7, how to score the model
+        7, how to score the model (sklearn.metrics)
+            mean_square_error()
+            r2_error()
         
 
 '''
