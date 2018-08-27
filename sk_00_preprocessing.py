@@ -62,6 +62,26 @@ print(data2)
 
 
 
+##########################################################################
+# feature selection
+
+# feature_selection works very like Scaler. First fit it, then transform the data
+from sklearn.feature_selection import SelectPercentile
+from sklearn.feature_selection import SelectKBest
+
+selector = SelectPercentile(0.5)
+selector.fit(x_train, y_train)
+x_train = selector.transform(x_train)
+
+support = selector.get_support()  # this is a list of boolean showing which is selected
+
+from sklearn.feature_selection import SelectFromModel
+
+selector = SelectFromModel(RandomForestClassifier(100), threshold='1.25*median')
+selector.fit(x_train,y_train)
+x_train = selector.transform(x_train)
+
+
 
 '''
     Excercise:
@@ -80,5 +100,16 @@ print(data2)
     3, you need to know:
         1) norm in Normalizer
         2) Binarizer(0.5)
+    
+    4, you need to know following selector, which is in sklearn.feature_selection
+        SelectPercentile
+        SelectKBest
+        SelectFromModel (threshold=)
+        
+    5, you need to following operations of selector:
+        .fit
+        .transform
+        .fit_transform
+        .get_support
 
 '''

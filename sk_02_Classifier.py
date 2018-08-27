@@ -89,7 +89,7 @@ svm = SVC(kernel= distance_matrix)
 # strategy
 svm = SVC(shrinking=False)
 
-svm = SVC(probablity = True)  # this is necessary for svc to predict_prob, it will slow down the train and predict 
+svm = SVC(probablity = True)  # this is necessary for svc to predict_proba, it will slow down the train and predict 
 
 
 
@@ -163,7 +163,7 @@ y_score = classifier.fit(x_train, y_train).decision_function(x_test)
         .coef_
         .intercept_
         .predict
-        .predict_prob
+        .predict_proba
         .decision_function
     
     3, you need to know how to draw the 2D classifier

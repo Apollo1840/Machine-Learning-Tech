@@ -12,7 +12,7 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-import numpy as np
+# numpy
 size=10
 X = np.array(np.random.choice(2, size=(size,)))
 print(X)
@@ -71,14 +71,24 @@ def gen_epochs(n, num_steps):
 #       for (X,Y) in epoch:
         
 
+#################################################################################
 
 
-# Turn our x placeholder into a list of one-hot tensors:
 # rnn_inputs is a list of num_steps tensors with shape [batch_size, num_classes]
 x = tf.placeholder(tf.int32, [batch_size, num_steps], name='input_placeholder')
 y = tf.placeholder(tf.float32, [batch_size, num_steps], name='labels_placeholder')
 num_classes = 2
-    
+
+'''
+    in tensor flow, the first dimension of tensor is always batch size, 
+    but for RNN, we need to train each step of the input separately, 
+    so here we did many operations on the dimension of the tensor.
+
+'''
+
+
+
+# Turn our x placeholder into a list of one-hot tensors:
 x_one_hot = tf.one_hot(x, num_classes)
 # [1,0,1],[1,0,0] ti [0,1][1,0][0,1], [..][..][..]
 
@@ -134,6 +144,11 @@ with tf.variable_scope('softmax'):
     
 logits = [tf.matmul(rnn_output, W) + b for rnn_output in rnn_outputs]
 predictions = [tf.nn.softmax(logit) for logit in logits]
+# in short = predictions =  [tf.nn.softmax(tf.matmul(rnn_output, W) + b) for rnn_output in rnn_outputs]
+y_pred = tf.transpose(predictions,[2,1,0])
+# 0 stands for the id in sequence
+# 1 stands for the id of the input
+# 2 stands for the decode of input
 
 # Turn our y placeholder into a list of labels
 y_as_list = tf.unstack(y, num=num_steps, axis=1)
@@ -142,7 +157,8 @@ y_as_list = tf.unstack(y, num=num_steps, axis=1)
 # losses = [tf.nn.sparse_softmax_cross_entropy_with_logits(labels=label, logits=logit) for \
 #          logit, label in zip(logits, y_as_list)]
 
-y_pred = tf.transpose(predictions,[2,1,0])
+
+
 losses = -y*tf.log(y_pred[0])
 
 total_loss = tf.reduce_mean(losses)
@@ -176,6 +192,7 @@ def train_network(num_epochs, num_steps, state_size=4, verbose=True):
                     training_loss = 0
 
     return training_losses
+
 training_losses = train_network(1,num_steps)
 plt.plot(training_losses)
         
@@ -192,13 +209,58 @@ tf.reset_default_graph()
 # what is final state
 
 cells = tf.nn.rnn_cell.BasicRNNcell(state_size)
+# cells = tf.nn.rnn_cell.BasicGRUcell(state_size)
+# cells = tf.nn.rnn_cell.BasicLSTMcell(state_size)
+
 rnn_outputs, final_state = tf.contrib.rnn.static_rnn(cells,rnn_inputs,initial_state=init_state)
 
 
+#########################################################################
+# dynamic model
+# in dynamic model the training data x should be [batch size, num_steps, features(dim of input)]
+
+num_steps = 5 # number of truncated backprop steps ('n' in the discussion above)
+batch_size = 200
+num_classes = 2
+state_size = 4
+learning_rate = 0.1
 
 
 
+x = tf.placeholder(tf.int32, [batch_size, num_steps], name='input_placeholder')
+y = tf.placeholder(tf.int32, [batch_size, num_steps], name='labels_placeholder')
 
+rnn_inputs = tf.one_hot(x, num_classes)
+
+cell = tf.contrib.rnn.BasicRNNCell(state_size)
+
+init_state = tf.zeros([batch_size, state_size])
+
+rnn_outputs, final_state = tf.nn.dynamic_rnn(cell, rnn_inputs, initial_state=init_state)
+
+
+with tf.variable_scope('softmax'):
+    W = tf.get_variable('W', [state_size, num_classes])
+    b = tf.get_variable('b', [num_classes], initializer=tf.constant_initializer(0.0))
+
+# I assume the rnn_outputs in in the form of [batch_size, num_steps, state_size]
+logits = tf.reshape(
+            tf.matmul(tf.reshape(rnn_outputs, [-1, state_size]), W) + b,
+            [batch_size, num_steps, num_classes])
+
+predictions = tf.nn.softmax(logits)
+
+losses = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
+# alternative:
+# logits = tf.transpose(logits, [2,0,1])
+# y_pred = tf.nn.sortmax(logits)
+# losses = -y*tf.log(y_pred[0])
+
+total_loss = tf.reduce_mean(losses)
+train_step = tf.train.AdagradOptimizer(learning_rate).minimize(total_loss)
+
+training_losses = train_network(1,num_steps)
+plt.plot(training_losses)
 
 
 
