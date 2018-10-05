@@ -186,3 +186,47 @@ plt.show()
         
 
 '''
+
+
+# robust regression
+from sklearn.datasets import make_regression
+
+# data
+n_samples = 1000
+X, y, coef = make_regression(n_samples=n_samples,
+                                      n_features=1,
+                                      n_informative=1,
+                                      noise=10,
+                                      coef=True,
+                                      random_state=0)
+
+n_outliers = 50
+X[:n_outliers] = 3 + 0.5 * np.random.normal(size=(n_outliers, 1))
+y[:n_outliers] = -3 + 0.5 * np.random.normal(size=n_outliers)
+
+
+model = LinearRegression()
+model.fit(X, y)
+
+from sklearn.linear_model import RANSACRegressor
+model_ransac = RANSACRegressor(LinearRegression())
+
+model_ransac.fit(X, y)
+inlier_mask = model_ransac.inlier_mask_
+outlier_mask = np.logical_not(inlier_mask)
+
+
+line_X = np.arange(-5, 5)
+line_y = model.predict(line_X[:, np.newaxis])
+line_y_ransac = model_ransac.predict(line_X[:, np.newaxis])
+
+
+plt.plot(X[inlier_mask], y[inlier_mask], '.g', label='Inliers')
+plt.plot(X[outlier_mask], y[outlier_mask], '.r', label='Outliers')
+
+plt.plot(line_X, line_y, '-k', label='Linear Regression')
+plt.plot(line_X, line_y_ransac, '-b', label="RANSAC Regression")
+plt.legend(loc='upper left')
+
+plt.show()
+

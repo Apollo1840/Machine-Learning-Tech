@@ -84,6 +84,16 @@ with tf.Session() as sess:
     print(b2_)
     print(b2_.shape)
     
+    
+    
+
+
+# show structure
+
+data = tf.placeholder("float", shape=[1, 7, 7, 1])
+conv = tf.nn.conv2d(data, filter=tf.Variable(tf.constant(0.1,shape=[4, 4, 1, 1])), strides=[1, 2, 2, 1], padding='SAME')
+
+print(conv.get_shape())  # prints (1, 4, 4, 1), but should be (1, 5, 5, 1)
 
 
 
