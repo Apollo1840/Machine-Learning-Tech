@@ -3,7 +3,7 @@ There are examples of how to use Scikit learn to do Machine Learnings and how to
 
 
 # 0. Machine Learning Handbook
-Basically, there is three category of machine learning.
+Basically, there are three categories of machine learning.
 
 * Supervised learning
 * Unsupervised learning
@@ -13,13 +13,14 @@ Under supervise learning, there are regression, classification ...
 
 Under Unsuperives learning, there are clustering, GAN(Generative Adversarial Network) ...
 
-Dont forget, for ML algorithm, there are some advanced question to think:
+
+Dont forget, for ML algorithm, there are some question should be thought in advance:
 
 * quality of the data?
 * how to choose training data, validation data and test data?
 * which attribute to choose?
 * how to evaluate the model?
-* in which situation the algorithm is going to use, what should be take care of?
+* in which situation the algorithm is going to be used, what should be take care of?
 
 ## 0.0 Advance
 
@@ -33,23 +34,21 @@ BIC
 
 
 ### 0.0.2 train/dev/test
-60/20/20
-98/1/1
-
+60/20/20 or 98/1/1
 
 leverage point
 
 k-fold cross validation
 
 ### 0.0.3 evaluation
-TP FP TN FN
+
+| TP | FP | TN | FN |
 
 accuracy: T/A
 
 sensitivity: TP/P
 
 specificity: TN/N
-
 
 ROC: sensitivity(x) to 1-specificity(y)
 
