@@ -16,6 +16,8 @@ from sklearn.linear_model import LinearRegression
 model_1 = LinearRegression()
 model_1.fit(x,y)
 y_ = model_1.predict(x)
+
+# plot the figure
 plt.plot(x,y,'o')
 plt.plot(x, y_,'r')
 plt.show()
@@ -24,9 +26,9 @@ print(model_1.coef_)
 print(model_1.intercept_)
 
 # l2 loss
-from sklearn.metrics import mean_square_error
-y_pred = model_1.predict(x)
-print(mean_square_error(y_pred, y))
+from sklearn.metrics import mean_squared_error
+print(mean_squared_error(y, y_))
+
 
 # use PolynomialFeatures to impove the performance
 from sklearn.preprocessing import PolynomialFeatures
@@ -53,6 +55,8 @@ print(poly.fit_transform([[1,5,2,1],[3,10,4,1]])) # a, b, c, d, ab, ac, ad, bc, 
 model_2 = LinearRegression(fit_intercept=False)  # assume we know y=0 when x=0
 model_2.fit(x_new,y)
 y_ = model_2.predict(x_new)
+
+# plot the figure
 plt.plot(x,y,'o')
 plt.plot(x, y_,'r')
 plt.show()
@@ -66,7 +70,7 @@ from sklearn.model_selection import train_test_split
 x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=0.7) # be careful of the order
 model_1 = LinearRegression()
 model_1.fit(x_train,y_train)
-print(model_1.score(x_train, y_train))  
+print(model_1.score(x_train, y_train))  # this is r2 score
 print(model_1.score(x_test, y_test))
 
 model_2 = LinearRegression()
@@ -93,11 +97,6 @@ plt.show()
 
 print(pr3.named_steps['lm'].coef_)
 print(pr3.named_steps['lm'].intercept_)
-
-
-
-
-
 
 
 
@@ -181,7 +180,7 @@ plt.show()
             train_size = 
             
         7, how to score the model (sklearn.metrics)
-            mean_square_error()
+            mean_squared_error()
             r2_error()
         
 
@@ -205,28 +204,31 @@ X[:n_outliers] = 3 + 0.5 * np.random.normal(size=(n_outliers, 1))
 y[:n_outliers] = -3 + 0.5 * np.random.normal(size=n_outliers)
 
 
+# build ML model
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import RANSACRegressor
 model = LinearRegression()
 model.fit(X, y)
 
-from sklearn.linear_model import RANSACRegressor
 model_ransac = RANSACRegressor(LinearRegression())
-
 model_ransac.fit(X, y)
+
+# draw the inlier and outlier points
 inlier_mask = model_ransac.inlier_mask_
 outlier_mask = np.logical_not(inlier_mask)
 
+plt.plot(X[inlier_mask], y[inlier_mask], '.g', label='Inliers')
+plt.plot(X[outlier_mask], y[outlier_mask], '.r', label='Outliers')
 
+# draw the two lines
 line_X = np.arange(-5, 5)
 line_y = model.predict(line_X[:, np.newaxis])
 line_y_ransac = model_ransac.predict(line_X[:, np.newaxis])
-
-
-plt.plot(X[inlier_mask], y[inlier_mask], '.g', label='Inliers')
-plt.plot(X[outlier_mask], y[outlier_mask], '.r', label='Outliers')
 
 plt.plot(line_X, line_y, '-k', label='Linear Regression')
 plt.plot(line_X, line_y_ransac, '-b', label="RANSAC Regression")
 plt.legend(loc='upper left')
 
+# show the plot
 plt.show()
 

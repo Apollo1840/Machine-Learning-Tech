@@ -15,6 +15,21 @@ logr.fit(x_train, y_train)
 print(logr.score(x_train, y_train))
 print(logr.score(x_test, y_test))
 
+# accuracy
+from sklearn.metrics import accuracy_score
+y_pred = logr.predict(x_train)
+print(accuracy_score(y_train, y_pred))
+
+from sklearn.metrics import precision
+print(precision(y_train, y_pred))
+
+from sklearn.metrics import classification_report
+target_names = ['class 0', 'class 1']
+print(classification_report(y_train, y_pred, target_names=target_names))
+
+
+
+
 print('coeffcients:')
 print(logr.coef_)
 print(logr.intercept_)
@@ -87,7 +102,7 @@ svm = SVC(kernel='sigmoid')
 svm = SVC(kernel= distance_matrix)
  
 # strategy
-svm = SVC(shrinking=False)
+svm = SVC(shrinking=False)  
 
 svm = SVC(probablity = True)  # this is necessary for svc to predict_proba, it will slow down the train and predict 
 
@@ -138,10 +153,11 @@ print(mlp.score(x_train, y_train))
 print(mlp.score(x_test, y_test))
 
 #############################################################
+from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
 classifier = OneVsRestClassifier(SVC(kernel='linear', probability=True))
-y_score = classifier.fit(x_train, y_train).decision_function(x_test)
-
+y_pred_p = classifier.fit(x_train, y_train).predict_proba(x_test)
+print(y_pred_p)
 
 
 '''
@@ -180,6 +196,11 @@ y_score = classifier.fit(x_train, y_train).decision_function(x_test)
         3) For KNeighborsClassifier
     
     5, you need to know how to use OneVsRestClassifier
+    
+    6, how to evaluate the model, from metrics (see more in http://scikit-learn.org/stable/modules/model_evaluation.html)
+        accuracy_score()
+        precision()  
+        
             
         
 '''

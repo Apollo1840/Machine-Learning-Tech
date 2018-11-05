@@ -43,6 +43,7 @@ k-fold cross validation
 ### 0.0.3 evaluation
 
 | TP | FP | TN | FN |
+| ---- | ---- | ---- | ---- | 
 
 accuracy: T/A
 
@@ -114,6 +115,16 @@ Batch Normalization
 Parameter tunning
 
 
+
+## Do you know?
+ 
+what is r2 score?
+
+what is GradientBoostingClassifier?
+
+what is f1 score?
+
+what is shrinking mean in SVM?
 
 
  

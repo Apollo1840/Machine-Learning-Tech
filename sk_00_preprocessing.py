@@ -56,7 +56,7 @@ data = np.random.rand(3,3)
 print(data)
 
 from sklearn.preprocessing import Binarizer
-encoder = Binarizer(0.5)
+encoder = Binarizer(0.5)  # 0.5 -> 0
 data2 = encoder.transform(data)
 print(data2)
 
@@ -70,12 +70,14 @@ from sklearn.feature_selection import SelectPercentile
 from sklearn.feature_selection import SelectKBest
 
 selector = SelectPercentile(0.5)
+# selector = SelectKBest(3)
 selector.fit(x_train, y_train)
 x_train = selector.transform(x_train)
 
 support = selector.get_support()  # this is a list of boolean showing which is selected
 
 from sklearn.feature_selection import SelectFromModel
+from sklearn.ensemble import RandomForestClassifier
 
 selector = SelectFromModel(RandomForestClassifier(100), threshold='1.25*median')
 selector.fit(x_train,y_train)
@@ -89,8 +91,9 @@ x_train = selector.transform(x_train)
         StandardScaler, 
         MinMaxScaler, 
         Normalizer, 
+        
         LabelEncoder, 
-        LabelBinarizer
+        LabelBinarizer,
         Binarizer
         
     2, you need to know how to use those tools:
