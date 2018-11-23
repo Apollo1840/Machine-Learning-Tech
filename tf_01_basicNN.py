@@ -1,12 +1,113 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Aug 21 17:55:13 2018
-
-@author: zouco
-"""
-
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
+
+
+# 0. how to build a simply NN:
+
+# assume we already have data, and we ignore the feed for the train
+# so the following programming can not work without some concret cases
+
+x_train =
+y_train =
+
+# assume the x_train is (1000, 5) data , y_train is (1000,1)
+x = tf.placeholder(tf.float32, [None, 5])
+y = tf.placeholder(tf.float32, [None, 1])
+
+n1 = 4
+w1 = tf.Variable(tf.random_normal([5, n1]))  # it is transpose of the form in textbook of NN
+b1 = tf.Variable(tf.zeros([1, n1])) # b1 is (1,4) because the output is 1 dimensional
+z1 = tf.matmul(x, w1) + b1 # here broadcast will happen
+a1 = tf.nn.relu(z1)
+
+n2 = 1
+w2 = tf.Variable(tf.random_normal([n1, 1]))
+b2 = tf.Variable(tf.zeros([1, n2]))
+z2 = tf.matmul(a1,w1) + b2
+a2 = z2
+
+loss = tf.reduce_mean(tf.square(a2-y))
+
+optimizer = tf.train.GradientDescentOptimizer(0.2)
+train = optimizer.minimize(loss)
+
+init = tf.initialize_all_variables()
+with tf.Session() as sess:
+    sess.run(init)
+    for i in range(200):
+        sess.run(train, feed_dict={x: x_train, y: y_train})
+    print(sess.run(loss, feed_dict={x: x_train, y: y_train}))
+
+
+# -----------------------------------------------------------------------------
+# 1. how to build a real NN:
+# here we use mini-batch, and we consider adjusting learning rate
+
+# minst
+mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
+    
+batch_size = 100
+n_batch = mnist.train.num_examples // batch_size
+# we need n_batch to write the loop 
+# in the loop we will use batch_xs, batch_ys = mnist.train.next_batch(batch_size)
+
+n_dim = 784
+n_out = 10
+pic = tf.placeholder(tf.float32, [None, n_dim])
+the_label = tf.placeholder(tf.float32, [None, n_out])
+
+learning_rate =  tf.placeholder(tf.float32) 
+
+# layer 1
+nb_n_1 = 500
+w1 = tf.Variable(tf.truncated_normal([n_dim, nb_n_1], stddev = 0.1))
+b1 = tf.Variable(tf.zeros([nb_n_1]) + 0.1)
+l1 = tf.nn.tanh(tf.matmul(pic, w1) + b1)
+nb_n = nb_n_1
+   
+# layer 2
+nb_n_2 = 300
+w2 = tf.Variable(tf.truncated_normal([nb_n, nb_n_2], stddev = 0.1))
+b2 = tf.Variable(tf.zeros([nb_n_2]) + 0.1)
+l2 = tf.nn.tanh(tf.matmul(l1, w2) + b2)
+nb_n = nb_n_2
+   
+# layer 3
+nb_n_3 = 10
+w3 = tf.Variable(tf.truncated_normal([nb_n, nb_n_3], stddev = 0.1))
+b3 = tf.Variable(tf.zeros([nb_n_3]) + 0.1)
+l3 = tf.nn.softmax(tf.matmul(l2, w3) + b3)
+
+loss = tf.reduce_mean(tf.square(the_label-l3))
+optimizer =  tf.train.AdamOptimizer(learning_rate)
+train = optimizer.minimize(loss) 
+
+# argmax is biggest location
+# this is a list of bool
+correct_predict = tf.equal(tf.argmax(l3, 1), tf.argmax(the_label, 1)) 
+accuracy = tf.reduce_mean(tf.cast(correct_predict, tf.float32))
+# tf.cast make True to be 1
+
+with tf.Session() as sess:
+   sess.run(tf.initialize_all_variables())
+   n_epoch = 200
+   for epoch in range(n_epoch + 1):
+       for batch in range(n_batch):
+           batch_xs, batch_ys = mnist.train.next_batch(batch_size)
+           sess.run(train, feed_dict={pic:batch_xs, the_label:batch_ys, learning_rate: 0.001 * (0.98**epoch)})
+       if epoch % 2 == 0:
+           acc = sess.run(accuracy, feed_dict={pic: mnist.test.images, the_label: mnist.test.labels})
+           print('{}%\tIteration {} : accuracy : {}'.format(float(epoch)*100/n_epoch, epoch, acc))
+
+
+
+# -----------------------------------------------------------------------------
+# 2. how to build it with tensorboard
+
+
+import tensorflow as tf
+
 
 def variable_summaries(var):
     with tf.name_scope('summarises'):
