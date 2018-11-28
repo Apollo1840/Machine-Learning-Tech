@@ -32,7 +32,7 @@ loss = tf.reduce_mean(tf.square(a2-y))
 optimizer = tf.train.GradientDescentOptimizer(0.2)
 train = optimizer.minimize(loss)
 
-init = tf.initialize_all_variables()
+init = tf.initializers.global_variables()
 with tf.Session() as sess:
     sess.run(init)
     for i in range(200):
@@ -46,22 +46,22 @@ with tf.Session() as sess:
 
 # minst
 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
-    
+
 batch_size = 100
 n_batch = mnist.train.num_examples // batch_size
 # we need n_batch to write the loop 
-# in the loop we will use batch_xs, batch_ys = mnist.train.next_batch(batch_size)
+# in the loop we will use: 
+# batch_xs, batch_ys = mnist.train.next_batch(batch_size)
 
-n_dim = 784
-n_out = 10
-pic = tf.placeholder(tf.float32, [None, n_dim])
-the_label = tf.placeholder(tf.float32, [None, n_out])
 
-learning_rate =  tf.placeholder(tf.float32) 
+# new we going to build the NN; lets start with placeholder for data and parameter
+pic             = tf.placeholder(tf.float32, [None, 784])
+the_label       = tf.placeholder(tf.float32, [None, 10])
+learning_rate   = tf.placeholder(tf.float32) 
 
 # layer 1
 nb_n_1 = 500
-w1 = tf.Variable(tf.truncated_normal([n_dim, nb_n_1], stddev = 0.1))
+w1 = tf.Variable(tf.truncated_normal([784, nb_n_1], stddev = 0.1))
 b1 = tf.Variable(tf.zeros([nb_n_1]) + 0.1)
 l1 = tf.nn.tanh(tf.matmul(pic, w1) + b1)
 nb_n = nb_n_1
@@ -75,22 +75,23 @@ nb_n = nb_n_2
    
 # layer 3
 nb_n_3 = 10
-w3 = tf.Variable(tf.truncated_normal([nb_n, nb_n_3], stddev = 0.1))
+w3 = tf.Variable(tf.truncated_normal([nb_n, 10], stddev = 0.1))
 b3 = tf.Variable(tf.zeros([nb_n_3]) + 0.1)
-l3 = tf.nn.softmax(tf.matmul(l2, w3) + b3)
+l3 = tf.nn.softmax(tf.matmul(l2, w3) + b3) # softmax layer takes no activation function
 
-loss = tf.reduce_mean(tf.square(the_label-l3))
+loss = tf.losses.softmax_cross_entropy(the_label, l3)
+# loss = tf.reduce_mean(tf.square(the_label-l3))  
+
 optimizer =  tf.train.AdamOptimizer(learning_rate)
 train = optimizer.minimize(loss) 
 
-# argmax is biggest location
-# this is a list of bool
+# ww also want to see some performance during the training
 correct_predict = tf.equal(tf.argmax(l3, 1), tf.argmax(the_label, 1)) 
 accuracy = tf.reduce_mean(tf.cast(correct_predict, tf.float32))
 # tf.cast make True to be 1
 
 with tf.Session() as sess:
-   sess.run(tf.initialize_all_variables())
+   sess.run(tf.initializers.global_variables())
    n_epoch = 200
    for epoch in range(n_epoch + 1):
        for batch in range(n_batch):
@@ -100,10 +101,23 @@ with tf.Session() as sess:
            acc = sess.run(accuracy, feed_dict={pic: mnist.test.images, the_label: mnist.test.labels})
            print('{}%\tIteration {} : accuracy : {}'.format(float(epoch)*100/n_epoch, epoch, acc))
 
+tf.reset_default_graph()
+
+
+
+
 
 
 # -----------------------------------------------------------------------------
 # 2. how to build it with tensorboard
+# First we need to carefully arrange our namescope
+# Then we put tf.summary.scalar or tf.summary.histogram where we need
+# Then we merge the summaries by: tf.summary.merge_all()
+# finally, during the sess, we sess.run the mergerd and write the output (smy) to writer:
+# how? by 
+# writer = tf.summary.FileWriter('logs/', sess.graph) 
+# and
+# writer.add_summary(smy, epoch)
 
 
 import tensorflow as tf
@@ -112,8 +126,9 @@ import tensorflow as tf
 def variable_summaries(var):
     with tf.name_scope('summarises'):
         mean = tf.reduce_mean(var)
-        tf.summary.scalar('mean', mean)
         stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+        
+        tf.summary.scalar('mean', mean)
         tf.summary.scalar('stddev', stddev)
         tf.summary.scalar('max', tf.reduce_max(var))
         tf.summary.scalar('min', tf.reduce_min(var))
@@ -211,8 +226,6 @@ init = tf.initialize_all_variables()
 merged = tf.summary.merge_all()
     
     
-    
-
 with tf.Session() as sess:
     writer = tf.summary.FileWriter('logs/', sess.graph) 
     sess.run(init)

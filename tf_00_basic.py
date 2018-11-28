@@ -37,7 +37,7 @@ train = optimizer.minimize(cost)
 
 with tf.Session() as sess:
     # since we use Variable we need to initialize it
-    sess.run(tf.global_variables_initializer())  
+    sess.run(tf.initializers.global_variables())  
     
     for _ in range(100):
         sess.run(train, feed_dict={x:data})

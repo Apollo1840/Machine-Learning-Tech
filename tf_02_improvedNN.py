@@ -14,6 +14,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+# ---------------------------------------------------------------------
+# 1. a more flexible way to build NN:
+
 # data
 # if data is less, NN will work extremely bad
 # also, y should not be too big better between 0 and 1
@@ -83,7 +86,12 @@ a.append(z[p])
 
 loss = tf.reduce_mean(tf.square(a[p]-y)/10**3)
 
-# regularization
+
+
+
+# ---------------------------------------------------------------------
+# 2. regularization
+# here shows an example of how to use regularization
 beta = 10**(-4)
 for i in range(len(w)):
     if i>0:
@@ -114,63 +122,41 @@ plt.show()
 print(loss_train)
 print(loss_test)
 
+# ---------------------------------------------------------------------
+# 3. dropout
+# here shows an example of how to use dropout
+
+nb_n_1 = 500
+w1 = tf.Variable(tf.truncated_normal([n_dim, nb_n_1], stddev = 0.1))
+b1 = tf.Variable(tf.zeros([nb_n_1]) + 0.1)
+l1_1 = tf.nn.tanh(tf.matmul(pic, w1) + b1)
+l1 = tf.nn.dropout(l1_1, keep_prob=1)
+
+# ---------------------------------------------------------------------
+# 4. mini-batch
 
 
-#--------------------------------------------------------------------
-# create mini-batch
-class Batch(object):
-    '''
-        how to use:  
-                batch = Batch(x_data,y_data,80)
-                x_data, y_data = batch.nextBatch()
-                # or
-                x_data, y_data = batch.nextBatch_enum()  # this will enumerate all data entry
-    
-    '''
-    
-    
-    def __init__(self, X, y, batch_size):
-        # X, y should be columnwise data
-        
-        self.X = X
-        self.y = y
-        assert(self.X.shape[0] == self.y.shape[0])
-        
-        self.batch_size = batch_size
-        self.remain_entry = list(range(self.y.shape[0]))
-    
-    def getBatch(self):
-        indices = np.random.choice(range(self.y.shape[0]), self.batch_size)
-        return self.X[indices, :], self.y[indices, :]
-    
-    def getBatch_enum(self):
-        if len(self.remain_entry) == 0:
-            return []
-        
-        if len(self.remain_entry) < self.batch_size:
-            indices = []
-            indices.extend(self.remain_entry)
-        else:    
-            indices = np.random.choice(self.remain_entry, self.batch_size, replace=False)
-        
-        if indices is not None:
-            for i in indices:
-                self.remain_entry.remove(i)
-        return self.X[indices, :], self.y[indices, :]
-    
+# ---------------------------------------------------------------------
+# 5. better initialization
 
-batch = Batch(x_data,y_data,80)
-print(x_data.shape)
-x_b,y_b = batch.getBatch_enum()
-print(x_b.shape)
-x_b,y_b = batch.getBatch_enum()
-print(x_b.shape)
-x_b,y_b = batch.getBatch_enum()
-print(x_b.shape)
+# let var(w) = 1/n
+nb_n_2 = 300
+w2 = tf.Variable(tf.truncated_normal([nb_n, nb_n_2], stddev = 1/np.sqrt(nb_n_2)))
+b2 = tf.Variable(tf.zeros([nb_n_2]) + 0.1)
+l2 = tf.nn.tanh(tf.matmul(l1, w2) + b2)
+nb_n = nb_n_2
 
-print(x_b)
-print(y_b)
+# in relu, let var(w) = 2/n
+w2 = tf.Variable(tf.truncated_normal([nb_n, nb_n_2], stddev = 2/np.sqrt(nb_n_2)))
+b2 = tf.Variable(tf.zeros([nb_n_2]) + 0.1)
+l2 = tf.nn.relu(tf.matmul(l1, w2) + b2)
 
+# There are more complex stddevs.
+
+# we can also tun this, if we want a fast starting NN
+w2 = tf.Variable(tf.truncated_normal([nb_n, nb_n_2], stddev = fast_start_parameter/np.sqrt(nb_n_2)))
+b2 = tf.Variable(tf.zeros([nb_n_2]) + 0.1)
+l2 = tf.nn.relu(tf.matmul(l1, w2) + b2)
 
 
 # Norm batch
