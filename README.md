@@ -144,12 +144,8 @@ Parameter tunning
 
 
 ## Do you know?
- 
-what is r2 score?
 
 what is GradientBoostingClassifier?
-
-what is f1 score?
 
 what is shrinking mean in SVM?
 

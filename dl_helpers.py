@@ -4,6 +4,7 @@ Created on Wed Nov 28 11:29:49 2018
 
 @author: zouco
 """
+import numpy as np
 
 #--------------------------------------------------------------------
 # create mini-batch
