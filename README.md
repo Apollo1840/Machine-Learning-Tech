@@ -1,5 +1,5 @@
 # Machine-Learning-Tech
-There are examples of how to use Scikit learn to do Machine Learnings and how to use tensorflow to do deep learning.
+There are examples of how to use Scikit learn to do Machine Learnings and how to use tensorflow and keras to do deep learning.
 
 
 # 0. Machine Learning Handbook
@@ -28,9 +28,15 @@ Dont forget, for ML algorithm, there are some question should be thought in adva
 outlier
 
 ### 0.0.1 factor selection
-AIC
 
-BIC
+Why should we reduce the number of the attributes? 
+It is like Why should we use l1 regularization.
+
+AIC or BIC:
+
+At large n, AIC tends to pick somewhat larger models than BIC. 
+If you're trying to understand what the main drivers are, you might want something more like BIC. 
+If that's less important than good MSPE, you might lean more toward AIC.
 
 
 ### 0.0.2 train/dev/test
@@ -97,14 +103,24 @@ Ridge regression; Lasson regression
 
 Robust regression
 
+GradientBoosting
+
+Xgboosting
+
 ### 0.0.2 Classification
 Decision tree (forest)
 
+Logistic Regression
+
 SVM
+
+SVM with kernel
 
 kNN
 
 NN (MLPClassifier: Multi-layer Perceptron)
+
+AdaBoosting
 
 ## 0.2 Unsupervise learning
 
@@ -116,6 +132,11 @@ Hierarchy
 DBSCAN [https://www.jianshu.com/p/e8dd62bec026]
 
 GMM [https://blog.csdn.net/jwh_bupt/article/details/7663885]
+
+FCM
+
+SOM
+
 
 ### 0.2.2 GAN
 
