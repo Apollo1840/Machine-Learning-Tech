@@ -22,3 +22,5 @@ print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 from sklearn import metrics
 scores = cross_val_score(clf, iris.data, iris.target, cv=5, scoring='f1_macro')
 print(scores)
+
+# this is from ipad
