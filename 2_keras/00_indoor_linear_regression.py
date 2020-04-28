@@ -41,13 +41,19 @@ X_test, Y_test = X[160:], Y[160:]       # last 40 data points
 # start
 model = Sequential()
 model.add(Dense(output_dim=1, input_dim=1))
-model.complie(optimizer="sgd", loss="mse")
+model.compile(optimizer="sgd", loss="mse")
 
-for i in range(301):
-    history = model.fit(X_train, Y_train, batch_size=100, epochs=3)
-    # or model.train_on_batch(x,y), it is more recommended
-    print(history.history['loss'])
+history = model.fit(X_train, Y_train, batch_size=100, epochs=3)
 
-model.evaluate(X_test, Y_test, batch_size=10)
+# print loss
+print(history.history['loss'][-1])
+
+# predict
+Y_pred = model.predict(X_test)
+
+# evaluate model
+print(model.evaluate(X_test, Y_test, batch_size=10))
+
+# get weights
 W, b = model.layers[0].get_weights()
 
