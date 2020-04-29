@@ -1,4 +1,2 @@
-/storage/
+**/storage/**
 **/.ipynb_checkpoints/**
-*checkpoints*
-*_data*
