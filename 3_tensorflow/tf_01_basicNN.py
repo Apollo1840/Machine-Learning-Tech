@@ -8,8 +8,8 @@ from tensorflow.examples.tutorials.mnist import input_data
 # assume we already have data, and we ignore the feed for the train
 # so the following programming can not work without some concret cases
 
-x_train =
-y_train =
+x_train = None
+y_train = None
 
 # assume the x_train is (1000, 5) data , y_train is (1000,1)
 x = tf.placeholder(tf.float32, [None, 5])
