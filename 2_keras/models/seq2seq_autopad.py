@@ -56,7 +56,7 @@ class S2sModel:
             # Update states
             states_value = [h, c]
 
-        return output_tokens[0]
+        return self.exclude_bos_eos(output_tokens[0])
 
     def fit(self, encoder_input_data, decoder_input_data, decoder_target_data, batch_size=32, epochs=12, **kwargs):
         """
@@ -80,6 +80,56 @@ class S2sModel:
                        epochs=epochs,
                        validation_split=0.2,
                        **kwargs)
+
+    @staticmethod
+    def preprare_data(output_data):
+        """
+        get decoder_input_data and decoder_target_data
+
+        """
+
+        # add two more zero rows
+        zero_shape = list(output_data.shape)
+        zero_shape[-1] = 1
+        zeros = np.zeros(zero_shape)
+        output2 = np.concatenate((zeros, output_data, zeros), axis=-1)
+
+        # add BOS and EOS
+        seq_shape = list(output2.shape)
+        bos_tile = np.zeros(seq_shape[-1])
+        bos_tile[0] = 1
+        eos_tile = np.zeros(seq_shape[-1])
+        eos_tile[-1] = 1
+
+        seq_shape[1] = 1
+        seq_shape[-1] = 1
+        decoder_input_data = np.concatenate((np.tile(bos_tile, seq_shape),
+                                             output2,
+                                             np.tile(eos_tile, seq_shape)),
+                                            axis=1)
+
+        # target has no BOS
+        decoder_target_data = np.concatenate((output2,
+                                              np.tile(eos_tile, seq_shape)),
+                                             axis=1)
+
+        return decoder_input_data, decoder_target_data
+
+    @staticmethod
+    def exclude_bos_eos(output_with_bos_eos):
+        """
+        inverse of get decoder_target from output
+
+        :param output_with_bos_eos: np.array. dim: n_sample, len_seq, output_dim
+        """
+
+        seq_axis = 1
+        _, output_with_zero, _ = np.split(output_with_bos_eos, (0, output_with_bos_eos.shape[seq_axis] - 1),
+                                          axis=seq_axis)
+
+        prob_axis = -1
+        _, output, _ = np.split(output_with_zero, (1, output_with_zero.shape[prob_axis] - 1), axis=prob_axis)
+        return output
 
     def load(self):
         raise NotImplemented
@@ -139,4 +189,3 @@ def seq2seq(num_encoder_tokens, num_decoder_tokens, latent_dim):
         [decoder_outputs] + decoder_states)
 
     return model, encoder_model, decoder_model
-jp

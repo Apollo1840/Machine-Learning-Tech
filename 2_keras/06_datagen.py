@@ -72,7 +72,7 @@ class DataGeneratorLoad(keras.utils.Sequence):
     def __getitem__(self, index):
         'Generate one batch of data'
         # Generate indexes of the batch
-        indexes = self.indexes[index*self.batch_size:(index+1)*self.batch_size]
+        indexes = self.indexes[index * self.batch_size:(index + 1) * self.batch_size]
 
         # Find list of IDs
         list_IDs_temp = [self.list_IDs[k] for k in indexes]
@@ -98,7 +98,7 @@ class DataGeneratorLoad(keras.utils.Sequence):
         # Generate data
         for i, ID in enumerate(list_IDs_temp):
             # Store sample
-            X[i, ] = np.load('data/' + ID + '.npy')
+            X[i,] = np.load('data/' + ID + '.npy')
 
             # Store class
             y[i] = self.labels[ID]
