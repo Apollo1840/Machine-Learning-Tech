@@ -139,4 +139,3 @@ def seq2seq(num_encoder_tokens, num_decoder_tokens, latent_dim):
         [decoder_outputs] + decoder_states)
 
     return model, encoder_model, decoder_model
-jp

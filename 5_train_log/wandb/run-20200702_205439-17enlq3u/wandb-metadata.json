@@ -1,0 +1,29 @@
+{
+    "root": "/home/congyu/congyu_program/pythons/inits/k_machine_learning_tech",
+    "program": "<python with no main file>",
+    "git": {
+        "remote": "git@github.com:Apollo1840/Machine-Learning-Tech.git",
+        "commit": "2ac72b73addd53c5e770722848ece826384e163d"
+    },
+    "email": "zoucongyu1993@hotmail.com",
+    "startedAt": "2020-07-02T20:54:44.368540",
+    "host": "home-msi",
+    "username": "congyu",
+    "executable": "/home/congyu/.virtualenvs/congyuml/bin/python3.6",
+    "os": "Linux-5.3.0-61-generic-x86_64-with-Ubuntu-18.04-bionic",
+    "python": "3.6.8",
+    "gpu": "GeForce GTX 1070",
+    "gpu_count": 1,
+    "cpu_count": 8,
+    "cuda": "10.0.130",
+    "args": [
+        "-f",
+        "/home/congyu/.local/share/jupyter/runtime/kernel-1bcef9e5-1142-4882-8eac-706f179f6d72.json"
+    ],
+    "state": "running",
+    "jobType": null,
+    "mode": "run",
+    "name": "cerulean-energy-2",
+    "project": "basicNN",
+    "heartbeatAt": "2020-07-02T20:55:23.557861"
+}
