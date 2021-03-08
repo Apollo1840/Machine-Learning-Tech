@@ -5,11 +5,14 @@ from sacred import Experiment
 from sacred.observers import MongoObserver
 from pymongo import MongoClient
 
+# set up your mongodb
 # > sudo apt-get install mongodb
 # > sudo service mongodb start
 # > sduo service mongodb status
+
 # > sudo npm install -g omniboard
 # > omniboard -m localhost:27017:sacred
+# more info: https://vivekratnavel.github.io/omniboard/#/quick-start
 
 ex = Experiment()
 ex.observers.append(MongoObserver())

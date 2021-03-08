@@ -5,6 +5,7 @@ from sacred import Experiment
 
 ex = Experiment()
 
+
 def load_data():
     # the data, split between train and test sets
     (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
