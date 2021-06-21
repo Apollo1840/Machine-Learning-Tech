@@ -1,6 +1,8 @@
 import numpy as np
 from random import randint
 from sklearn.preprocessing import MinMaxScaler
+
+from keras.preprocessing import sequence
 from keras.utils.np_utils import to_categorical
 
 
@@ -63,3 +65,21 @@ def mnist_data():
     print(x_test.shape)
 
     return x_train, y_train, x_test, y_test
+
+
+def imdb_data():
+    """
+    input: movie reviews.
+    output: pos or neg
+    """
+    from keras.datasets import imdb
+
+    vocab_size = 20000  # Only consider the top 20k words
+    maxlen = 200  # Only consider the first 200 words of each movie review
+    (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=vocab_size)
+    print(len(x_train), "Training sequences")
+    print(len(y_test), "Validation sequences")
+    x_train = sequence.pad_sequences(x_train, maxlen=maxlen)
+    x_test = sequence.pad_sequences(x_test, maxlen=maxlen)
+
+    return x_train, y_train, x_test, y_test, vocab_size, maxlen

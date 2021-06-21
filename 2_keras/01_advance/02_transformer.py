@@ -1,108 +1,96 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 15 22:39:48 2019
-
-@author: zouco
-"""
-from keras import Input, Model
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.optimizers import RMSprop
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras.layers import (Layer,
+                                     Input,
+                                     Dense,
+                                     LayerNormalization,
+                                     Dropout,
+                                     Embedding,
+                                     GlobalAveragePooling1D,
+                                     MultiHeadAttention)
 
 from material.data import *
 
-# a typical Keras approach is bulid -> compile -> fit -> predict
-#  model=Sequential; model.add() ....
-#  model.compile(optimizer=, loss=, metrics=)
-#  model.fit(...)
-#  model.predict(...)
 
-x_train, y_train, x_test, y_test = mnist_data()
+class TransformerBlock(Layer):
+    def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
+        super(TransformerBlock, self).__init__()
+        self.att = MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
+        self.ffn = keras.Sequential([Dense(ff_dim, activation="relu"), Dense(embed_dim)])
+        self.layernorm1 = LayerNormalization(epsilon=1e-6)
+        self.layernorm2 = LayerNormalization(epsilon=1e-6)
+        self.dropout1 = Dropout(rate)
+        self.dropout2 = Dropout(rate)
 
-# build model
-model = Sequential([
-    Dense(16, input_shape=(784,), activation="relu"),
-    Dense(32, activation="relu"),
-    Dense(2, activation="softmax")
-])
+    def call(self, inputs, training):
+        """
 
-del model
+                |
+        +--------------------+
+        |   multi-head-att  |
+        +-------------------+
+                |
+        +------------------------+
+        |   dropout & layernorm  |
+        +------------------------+
+                |
+        +--------------------+
+        |   fully connected  |
+        +-------------------+
+                |
+        +------------------------+
+        |   dropout & layernorm  |
+        +------------------------+
+                |
 
-# another way
-model = Sequential()
-model.add(Dense(16, input_shape=(784,), activation="relu"))
-model.add(Dense(2, activation="relu"))
-model.add(Dense(2, activation="softmax"))
+        """
 
-del model
+        attn_output = self.att(inputs, inputs)
+        attn_output = self.dropout1(attn_output, training=training)
+        out1 = self.layernorm1(inputs + attn_output)
 
-# third way
-x = Input(shape=(784,))
-h = Dense(16)(x)
-h = Dense(2)(h)
-y = Dense(2)(h)
-model = Model(inputs=x, outputs=y)
-
-# Another way to define your optimizer
-rmsprop = RMSprop(lr=0.001, rho=0.9, epsilon=1e-08, decay=0.0)
-
-# We add metrics to get more results you want to see
-model.compile(optimizer=rmsprop, loss='categorical_crossentropy', metrics=['accuracy'])
-
-history = model.fit(x_train, y_train, epochs=2, batch_size=32)
-
-# consider validation
-history = model.fit(x=x_train,
-                    y=y_train,
-                    epochs=5,
-                    validation_split=0.2)
-
-# consider validation
-history = model.fit(x=x_train,
-                    y=y_train,
-                    epochs=5,
-                    validation_data=(x_train[-100:], y_train[-100:]))
-
-# print loss
-print(history.history['loss'][-1])
-
-# predict
-y_pred = model.predict(x_test[-100:])
-
-# evaluate model
-loss, accuracy = model.evaluate(x_test, y_test)
-
-print('test loss: ', loss)
-print('test accuracy: ', accuracy)
-
-# knowledge 02: get weights
-W, b = model.layers[0].get_weights()
-
-# save and load
-import os
-import json
-from keras.models import load_model
-from keras.models import model_from_json
-PROJECT_FOLDER = os.path.join(os.getcwd(), "material/storage")
-os.chdir(PROJECT_FOLDER)
-print(os.getcwd())
+        ffn_output = self.ffn(out1)
+        ffn_output = self.dropout2(ffn_output, training=training)
+        ffn_output = self.layernorm2(out1 + ffn_output)
+        return ffn_output
 
 
-# way 1:
-model.save("dummie_model.h5")
-model = load_model("dummie_model.h5")
+class TokenAndPositionEmbedding(Layer):
+    def __init__(self, maxlen, vocab_size, embed_dim):
+        super(TokenAndPositionEmbedding, self).__init__()
+        self.token_emb = Embedding(input_dim=vocab_size, output_dim=embed_dim)
+        self.pos_emb = Embedding(input_dim=maxlen, output_dim=embed_dim)
 
-# way 2, save model shape and weights differently:
+    def call(self, x):
+        maxlen = tf.shape(x)[-1]
+        positions = tf.range(start=0, limit=maxlen, delta=1)
+        positions = self.pos_emb(positions)  # farmore easier version of position embeding than the paper
+        x = self.token_emb(x)
+        return x + positions
 
-# save
-json_string = model.to_json()
-with open("dummie_model.json", "w") as f:
-    json.dump(json_string, f)
 
-model.save_weights("dummie_model_weights.h5")
+if __name__ == "__main__":
+    x_train, y_train, x_test, y_test, vocab_size, maxlen = imdb_data()
 
-# load
-with open("dummie_model.json", "r") as f:
-    model = model_from_json(json.load(f))
+    embed_dim = 32  # Embedding size for each token
+    num_heads = 2  # Number of attention heads
+    ff_dim = 32  # Hidden layer size in feed forward network inside transformer
 
-model.load_weights("dummie_model_weights.h5")
+    # build the model
+    inputs = Input(shape=(maxlen,))
+    x = TokenAndPositionEmbedding(maxlen, vocab_size, embed_dim)(inputs)
+    x = TransformerBlock(embed_dim, num_heads, ff_dim)(x)
+    x = GlobalAveragePooling1D()(x)
+    x = Dropout(0.1)(x)
+    x = Dense(20, activation="relu")(x)
+    x = Dropout(0.1)(x)
+    outputs = Dense(2, activation="softmax")(x)
+    model = keras.Model(inputs=inputs, outputs=outputs)
+    model.compile("adam", "sparse_categorical_crossentropy", metrics=["accuracy"])
+
+    # train model
+    history = model.fit(
+        x_train, y_train, batch_size=32, epochs=2, validation_data=(x_val, y_val)
+    )
+
+
