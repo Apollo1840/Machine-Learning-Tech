@@ -15,6 +15,7 @@ from keras.optimizers import RMSprop
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import ReduceLROnPlateau
 
+from material.data import *
 
 # a typical Keras approach is bulid -> compile -> fit -> predict
 #  model=Sequential; model.add() ....
@@ -22,38 +23,22 @@ from keras.callbacks import ReduceLROnPlateau
 #  model.fit(...)
 #  model.predict(...)
 
+x_train, y_train, x_test, y_test = trival_data2()
 
-# for example, a linear model:
-# -------------------------------------------------------------------
-# 01 linear model:
-# create some data
-X = np.linspace(-1, 1, 200)
-np.random.shuffle(X)    # randomize the data
-Y = 0.5 * X + 2 + np.random.normal(0, 0.05, (200, ))
 # plot data
-plt.scatter(X, Y)
+plt.scatter(x_train, y_train)
 plt.show()
-
-X_train, Y_train = X[:160], Y[:160]     # first 160 data points
-X_test, Y_test = X[160:], Y[160:]       # last 40 data points
-
 
 # start
 model = Sequential()
 model.add(Dense(output_dim=1, input_dim=1))
 model.compile(optimizer="sgd", loss="mse")
 
-history = model.fit(X_train, Y_train, batch_size=100, epochs=3)
-
-# print loss
-print(history.history['loss'][-1])
+# train
+model.fit(x_train, y_train, batch_size=100, epochs=3)
 
 # predict
-Y_pred = model.predict(X_test)
+Y_pred = model.predict(x_test)
 
-# evaluate model
-print(model.evaluate(X_test, Y_test, batch_size=10))
 
-# get weights
-W, b = model.layers[0].get_weights()
 
