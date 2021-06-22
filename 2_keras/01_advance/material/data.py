@@ -6,6 +6,15 @@ from keras.preprocessing import sequence
 from keras.utils.np_utils import to_categorical
 
 
+def print_datashape(x_train, y_train, x_test=None, y_test=None):
+    print(x_train.shape)
+    print(y_train[:5])
+
+    if x_test is not None and y_test is not None:
+        print(x_test.shape)
+        print(y_test[:5])
+
+
 def trival_data():
     # data
     train_labels = []
@@ -28,8 +37,7 @@ def trival_data():
     scaler = MinMaxScaler(feature_range=(0, 1))
     x_train = scaler.fit_transform(x_train.reshape(-1, 1))
 
-    print(x_train.shape)
-    print(y_train.shape)
+    print_datashape(x_train, y_train)
 
     return x_train, y_train
 
@@ -43,8 +51,7 @@ def trival_data2():
     x_train, y_train = X[:160], Y[:160]  # first 160 data points
     x_test, y_test = X[160:], Y[160:]  # last 40 data points
 
-    print(x_train.shape)
-    print(x_test.shape)
+    print_datashape(x_train, y_train, x_test, y_test)
 
     return x_train, y_train, x_test, y_test
 
@@ -61,8 +68,7 @@ def mnist_data():
     y_train = to_categorical(y_train, num_classes=10)
     y_test = to_categorical(y_test, num_classes=10)
 
-    print(x_train.shape)
-    print(x_test.shape)
+    print_datashape(x_train, y_train, x_test, y_test)
 
     return x_train, y_train, x_test, y_test
 
@@ -77,9 +83,12 @@ def imdb_data():
     vocab_size = 20000  # Only consider the top 20k words
     maxlen = 200  # Only consider the first 200 words of each movie review
     (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=vocab_size)
-    print(len(x_train), "Training sequences")
-    print(len(y_test), "Validation sequences")
+
     x_train = sequence.pad_sequences(x_train, maxlen=maxlen)
     x_test = sequence.pad_sequences(x_test, maxlen=maxlen)
+    y_train = to_categorical(y_train, num_classes=2)
+    y_test = to_categorical(y_test, num_classes=2)
+
+    print_datashape(x_train, y_train, x_test, y_test)
 
     return x_train, y_train, x_test, y_test, vocab_size, maxlen

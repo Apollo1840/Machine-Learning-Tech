@@ -1,3 +1,6 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.layers import (Layer,
@@ -8,6 +11,7 @@ from tensorflow.keras.layers import (Layer,
                                      Embedding,
                                      GlobalAveragePooling1D,
                                      MultiHeadAttention)
+from sklearn.metrics import classification_report
 
 from material.data import *
 
@@ -87,10 +91,33 @@ if __name__ == "__main__":
     outputs = Dense(2, activation="softmax")(x)
     model = keras.Model(inputs=inputs, outputs=outputs)
     model.compile("adam", "sparse_categorical_crossentropy", metrics=["accuracy"])
+    model.summary()
 
     # train model
     history = model.fit(
-        x_train, y_train, batch_size=32, epochs=2, validation_data=(x_val, y_val)
+        x_train, y_train, batch_size=32, epochs=2, validation_data=(x_test, y_test)
     )
 
+    # list all data in history
+    print(history.history.keys())
+    # summarize history for accuracy
+    plt.plot(history.history['accuracy'])
+    plt.plot(history.history['val_accuracy'])
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.show()
+    # summarize history for loss
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.show()
 
+    y_pred = model.predict(x_test, verbose=True)
+    y_pred = np.argmax(y_pred, axis=-1)
+    y_test = np.argmax(y_test, axis=-1)
+    classification_report(y_test, y_pred)
