@@ -56,15 +56,20 @@ def trival_data2():
     return x_train, y_train, x_test, y_test
 
 
-def mnist_data():
+def mnist_data(img=False):
     # download the mnist to the path '~/.keras/datasets/' if it is the first time to be called
     # X shape (60,000 28x28), y shape (10,000, )
     from keras.datasets import mnist
     (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
     # data pre-processing
-    x_train = X_train.reshape(X_train.shape[0], -1) / 255.  # normalize
-    x_test = X_test.reshape(X_test.shape[0], -1) / 255.  # normalize
+    if img:
+        x_train = X_train / 255.  # normalize
+        x_test = X_test / 255.  # normalize
+    else:
+        x_train = X_train.reshape(X_train.shape[0], -1) / 255.  # normalize
+        x_test = X_test.reshape(X_test.shape[0], -1) / 255.  # normalize
+
     y_train = to_categorical(y_train, num_classes=10)
     y_test = to_categorical(y_test, num_classes=10)
 
