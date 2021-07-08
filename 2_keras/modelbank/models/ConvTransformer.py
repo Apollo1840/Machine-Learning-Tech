@@ -57,7 +57,7 @@ class TransformerBlock(Layer):
 
 
 def ConvTransformer():
-    # define CNN model
+    # define CNN Layers
     cnn = Sequential(name="ConvLayers")
     cnn.add(Conv1D(32, 3, activation='relu', padding='same', input_shape=(28, 1)))
     cnn.add(MaxPooling1D(pool_size=2))
