@@ -1,62 +1,23 @@
 import numpy as np
-import sys
-import time
+import matplotlib.pyplot as plt
+import PIL
 from PIL import Image
+
 import tensorflow as tf
-from tensorflow import keras
 from tensorflow.keras.layers import (
     Layer,
-    Input,
-    InputLayer,
-    Flatten,
-    Activation,
-    Conv2DTranspose,
-    Dense)
-from keras.layers.convolutional import (
     Conv2D,
-    MaxPooling2D)
-from keras.activations import *
+    MaxPooling2D,
+    Input)
 from keras.models import Model, Sequential
 from keras.applications import vgg16, imagenet_utils
 import keras.backend as K
-import numpy
-import math
-import matplotlib.pyplot as plt
-import PIL
-
-
-def load_img(image_path):
-    img = Image.open(image_path)
-    img = img.resize((224, 224), resample=PIL.Image.NEAREST)
-    img_array = np.array(img)
-    img_array = img_array[np.newaxis, :]
-    img_array = img_array.astype(np.float)
-    img_array = imagenet_utils.preprocess_input(img_array)
-    print(img_array.shape)
-    return img_array
-
-
-def visualize_img(img_data, examinate=False):
-    if examinate:
-        plt.imshow(img_data)
-        plt.show()
-
-    print(img_data.shape)
-    img_data = img_data - img_data.min()
-    img_data *= 1.0 / (img_data.max() + 1e-8)
-    uint8_deconv = (img_data * 255).astype(np.uint8)
-    # print(uint8_deconv)
-    img = Image.fromarray(uint8_deconv, 'RGB')
-    plt.imshow(img)
-    plt.show()
-
-    return img
 
 
 class Deconv():
 
     @staticmethod
-    def get_observation(field, kernel_size, stride, padding_size, observe_size):
+    def get_observation2d(field, kernel_size, stride, padding_size, observe_size):
         top_left, bottom_right = field
 
         affine_tl = lambda x: max(0, stride * x - padding_size)
@@ -68,10 +29,10 @@ class Deconv():
         return top_left_new, bottom_right_new
 
 
-class Deconv2D(Conv2D, Deconv):
+class DeConv2D(Conv2D, Deconv):
 
     def __init__(self, *args, **kwargs):
-        super(Deconv2D, self).__init__(*args, **kwargs)
+        super(DeConv2D, self).__init__(*args, **kwargs)
 
         if self.strides == (1, 1) and self.padding == "same":
             self.pad_size = self.kernel_size[0] // 2  # needed for calcualate observation_field
@@ -79,11 +40,11 @@ class Deconv2D(Conv2D, Deconv):
             self.pad_size = 0
 
     def observation_field(self, field):
-        return super().get_observation(field,
-                                       kernel_size=self.kernel_size[0],
-                                       stride=self.strides[0],
-                                       padding_size=1,
-                                       observe_size=self.output_shape[1])  # None, fmap_size, fmap_size, n_channels
+        return super().get_observation2d(field,
+                                         kernel_size=self.kernel_size[0],
+                                         stride=self.strides[0],
+                                         padding_size=1,
+                                         observe_size=self.output_shape[1])  # None, fmap_size, fmap_size, n_channels
 
 
 class ReverseBiasLayer(Layer):
@@ -92,7 +53,7 @@ class ReverseBiasLayer(Layer):
         super(ReverseBiasLayer, self).__init__()
         self.bias = K.constant((-1) * bias)
 
-    def call(self, inputs):
+    def call(self, inputs, **kwargs):
         return inputs + self.bias
 
     def observation_field(self, field):
@@ -107,15 +68,15 @@ class MaxUnPooling(Layer, Deconv):
         self.switch_matrix = K.constant(switch_matrix)
         self.pool_size = pool_size
 
-    def call(self, inputs):
+    def call(self, inputs, **kwargs):
         return tf.repeat(tf.repeat(inputs, 2, axis=1), 2, axis=2) * self.switch_matrix
 
     def observation_field(self, field):
-        return super().get_observation(field,
-                                       kernel_size=self.pool_size[0],
-                                       stride=self.pool_size[0],
-                                       padding_size=0,
-                                       observe_size=float("Inf"))
+        return super().get_observation2d(field,
+                                         kernel_size=self.pool_size[0],
+                                         stride=self.pool_size[0],
+                                         padding_size=0,
+                                         observe_size=float("Inf"))
         # top_left, bottom_right = field
         # self.top_left = (top_left[0] * self.pool_size, top_left[1] * self.pool_size)
         # self.bottom_right = ((bottom_right[0] + 1) * self.pool_size - 1,
@@ -123,7 +84,7 @@ class MaxUnPooling(Layer, Deconv):
         # return self.top_left, self.bottom_right
 
 
-class Deconv2DModel(Sequential):
+class DeConv2DModel(Sequential):
 
     @classmethod
     def from_conv2d(cls, model, n_layers, current_feature_maps, lyid_feature_maps):
@@ -162,7 +123,7 @@ class Deconv2DModel(Sequential):
         padding = conv2d_layer.padding
         b = np.zeros(n_filters)
 
-        return Deconv2D(n_filters, kernel_size=kernel_size,
+        return DeConv2D(n_filters, kernel_size=kernel_size,
                         strides=strides,
                         padding=padding,
                         kernel_initializer=tf.constant_initializer(W),
@@ -214,8 +175,8 @@ class Deconv2DModel(Sequential):
     @staticmethod
     def test(feature_maps):
         # test deconv layers
-        d2d = Deconv2DModel.get_deconv2d(model.layers[1])
-        rb = Deconv2DModel.get_deconv2d_reverse_bias(model.layers[1])
+        d2d = DeConv2DModel.get_deconv2d(model.layers[1])
+        rb = DeConv2DModel.get_deconv2d_reverse_bias(model.layers[1])
 
         test_model = Sequential()
         test_model.add(Input(shape=(224, 224, 64)))
@@ -227,7 +188,35 @@ class Deconv2DModel(Sequential):
         visualize_img(img_re)
 
 
-def get_fm_model(model, ixs_layers=(1, 3, 4, 6, 7, 9)):
+def load_img(image_path):
+    img = Image.open(image_path)
+    img = img.resize((224, 224), resample=PIL.Image.NEAREST)
+    img_array = np.array(img)
+    img_array = img_array[np.newaxis, :]
+    img_array = img_array.astype(np.float)
+    img_array = imagenet_utils.preprocess_input(img_array)
+    print(img_array.shape)
+    return img_array
+
+
+def visualize_img(img_data, examinate=False):
+    if examinate:
+        plt.imshow(img_data)
+        plt.show()
+
+    print(img_data.shape)
+    img_data = img_data - img_data.min()
+    img_data *= 1.0 / (img_data.max() + 1e-8)
+    uint8_deconv = (img_data * 255).astype(np.uint8)
+    # print(uint8_deconv)
+    img = Image.fromarray(uint8_deconv, 'RGB')
+    plt.imshow(img)
+    plt.show()
+
+    return img
+
+
+def get_fmap_model(model, ixs_layers=(1, 3, 4, 6, 7, 9)):
     outputs = [model.layers[i].output for i in ixs_layers]
     fm_model = Model(inputs=model.inputs, outputs=outputs)
     model.trainable = False
@@ -236,7 +225,25 @@ def get_fm_model(model, ixs_layers=(1, 3, 4, 6, 7, 9)):
 
 def get_deconv_model(model, n_layers, current_feature_maps, lyid_feature_maps):
     lyid_feature_maps = list(lyid_feature_maps)
-    return Deconv2DModel.from_conv2d(model, n_layers, current_feature_maps, lyid_feature_maps)
+    return DeConv2DModel.from_conv2d(model, n_layers, current_feature_maps, lyid_feature_maps)
+
+
+def plot_feature_maps(feature_maps, square=4):
+    for fmap in feature_maps:
+        print(fmap.shape)
+        # plot all 64 maps in an 8x8 squares
+        ix = 0
+        for _ in range(square):
+            for _ in range(square):
+                # specify subplot and turn of axis
+                ax = plt.subplot(square, square, ix + 1)
+                ax.set_xticks([])
+                ax.set_yticks([])
+                # plot filter channel in grayscale
+                plt.imshow(fmap[0, :, :, ix], cmap='gray')
+                ix += 1
+        # show the figure
+        plt.show()
 
 
 def filter_fmap(fmap, i_filter, return_loc=True):
@@ -261,25 +268,7 @@ def filter_fmap(fmap, i_filter, return_loc=True):
         return fmap_filtered
 
 
-def plot_feature_maps(feature_maps, square=4):
-    for fmap in feature_maps:
-        print(fmap.shape)
-        # plot all 64 maps in an 8x8 squares
-        ix = 0
-        for _ in range(square):
-            for _ in range(square):
-                # specify subplot and turn of axis
-                ax = plt.subplot(square, square, ix + 1)
-                ax.set_xticks([])
-                ax.set_yticks([])
-                # plot filter channel in grayscale
-                plt.imshow(fmap[0, :, :, ix], cmap='gray')
-                ix += 1
-        # show the figure
-        plt.show()
-
-
-def show_reconstruct_pattern(deconv_model: Deconv2DModel, fmap, img, i_filter=None):
+def show_reconstruct_pattern(deconv_model: DeConv2DModel, fmap, img, i_filter=None):
     # highest activati within all fmaps
     if i_filter is None:
         max_ = np.argmax(fmap[0])
@@ -311,7 +300,7 @@ if __name__ == "__main__":
     for i, layer in enumerate(model.layers):
         print("{}:\t{}".format(i, layer))
     lyid_feature_maps = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    fm_model = get_fm_model(model, ixs_layers=lyid_feature_maps)
+    fm_model = get_fmap_model(model, ixs_layers=lyid_feature_maps)
     fm_model.summary()
 
     # see fmaps
