@@ -303,9 +303,11 @@ if __name__ == "__main__":
     fm_model = get_fmap_model(model, ixs_layers=lyid_feature_maps)
     fm_model.summary()
 
-    # see fmaps
+    # get fmaps
     feature_maps = fm_model.predict(img)
-    plot_feature_maps(feature_maps)
+
+    # see feature_maps
+    # plot_feature_maps(feature_maps)
 
     # get deconv model
     i_layer = 11
