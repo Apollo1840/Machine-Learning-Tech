@@ -7,6 +7,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import (
     Layer,
     Conv2D,
+    Activation,
     MaxPooling2D,
     Input)
 from keras.models import Model, Sequential
@@ -14,10 +15,39 @@ from keras.applications import vgg16, imagenet_utils
 import keras.backend as K
 
 
+class DActivation(Activation):
+    def observation_field(self, field):
+        return field
+
+
+class ReverseBiasLayer(Layer):
+    # basicall the same as Dense layer without activation
+    def __init__(self, bias):
+        super(ReverseBiasLayer, self).__init__()
+        self.bias = K.constant((-1) * bias)
+
+    def call(self, inputs, **kwargs):
+        return inputs + self.bias
+
+    def observation_field(self, field):
+        return field
+
+
 class Deconv():
 
     @staticmethod
     def get_observation2d(field, kernel_size, stride, padding_size, observe_size):
+        """
+        get observation field base on a given field, and some convLayer parameters
+
+        :param field: Tuple[Tuple], (x,y of top_left block, x,y of bottom_right block): eg:  ((1,2),(4,5))
+            it means a box from fmap[1, 2] to fmap[4, 5]
+        :param: kernel_size: int
+        :param: stride: int
+        :param: padding_size: int
+        :param: observe_size: int, the input square size of the convLayer. as maximum of observation loc
+        """
+
         top_left, bottom_right = field
 
         affine_tl = lambda x: max(0, stride * x - padding_size)
@@ -47,24 +77,11 @@ class DeConv2D(Conv2D, Deconv):
                                          observe_size=self.output_shape[1])  # None, fmap_size, fmap_size, n_channels
 
 
-class ReverseBiasLayer(Layer):
-    # basicall the same as Dense layer without activation
-    def __init__(self, bias):
-        super(ReverseBiasLayer, self).__init__()
-        self.bias = K.constant((-1) * bias)
-
-    def call(self, inputs, **kwargs):
-        return inputs + self.bias
-
-    def observation_field(self, field):
-        return field
-
-
-class MaxUnPooling(Layer, Deconv):
+class MaxUnPooling2D(Layer, Deconv):
     # basicall the same as Dense layer without activation
     # assert pool_size == strides
     def __init__(self, switch_matrix, pool_size):
-        super(MaxUnPooling, self).__init__()
+        super(MaxUnPooling2D, self).__init__()
         self.switch_matrix = K.constant(switch_matrix)
         self.pool_size = pool_size
 
@@ -92,7 +109,7 @@ class DeConv2DModel(Sequential):
         deconv_layers.add(Input(shape=model.layers[n_layers].output_shape[1:]))
         for i in range(n_layers, 0, -1):
             if isinstance(model.layers[i], Conv2D):
-                # deconv_layers.add(Activation("relu"))
+                deconv_layers.add(cls.get_activation())
                 deconv_layers.add(cls.get_deconv2d_reverse_bias(model.layers[i]))
                 deconv_layers.add(cls.get_deconv2d(model.layers[i]))
             if isinstance(model.layers[i], MaxPooling2D):
@@ -111,12 +128,19 @@ class DeConv2DModel(Sequential):
         return ReverseBiasLayer(conv2d_layer.get_weights()[1])
 
     @staticmethod
+    def get_activation():
+        return DActivation("relu")
+
+    @staticmethod
     def get_deconv2d(conv2d_layer: Conv2D):
         W = conv2d_layer.get_weights()[0]
+        # W: kernel_width, kernel_height, kernel_depth, n_filters
 
+        # Reverse the conv operation
         W = np.transpose(W, (0, 1, 3, 2))
-        # Reverse columns and rows
+        # Transpose the columns and rows
         W = W[::-1, ::-1, :, :]
+
         n_filters = W.shape[3]
         kernel_size = W.shape[0]
         strides = conv2d_layer.strides
@@ -141,45 +165,50 @@ class DeConv2DModel(Sequential):
         previous_fmap = current_feature_maps[id_layer - 1][0]
         assert current_fmap.shape[0] == previous_fmap.shape[0] // size
 
-        # todo: abstract it, make a helper function, test the helper function
+        switch_matrix = DeConv2DModel.switch_matrix_2d(current_fmap, previous_fmap, size)
+        return MaxUnPooling2D(switch_matrix, maxpool_layer.pool_size)
+
+    @staticmethod
+    def switch_matrix_2d(fmap, vmap, size):
         # todo: could further optimize
         switch_matrix = []
-        for k in range(current_fmap.shape[2]):
+        for k in range(fmap.shape[2]):
             switch_locs = []
-            for i in range(current_fmap.shape[0]):
-                for j in range(current_fmap.shape[1]):
+            for i in range(fmap.shape[0]):
+                for j in range(fmap.shape[1]):
                     # get index
-                    max_pool_field = previous_fmap[i * size: i * size + size, j * size: j * size + size, k]
-                    switch_ix = np.argmax(max_pool_field)
+                    max_pool_field = vmap[i * size: i * size + size, j * size: j * size + size, k]
+                    switch_locs.append(DeConv2DModel.max_mask(max_pool_field))
 
-                    # get loc matrix
-                    loc = np.zeros(4)
-                    loc[switch_ix] = 1
-                    loc = np.reshape(loc, (size, size))
-
-                    switch_locs.append(loc)
-
-            switch_locs = np.reshape(switch_locs, (current_fmap.shape[0], current_fmap.shape[1], size, size))
-
+            switch_locs = np.reshape(switch_locs, (fmap.shape[0], fmap.shape[1], size, size))
             rows = []
             for i in range(switch_locs.shape[0]):
                 columns = [switch_locs[i, j, :, :] for j in range(switch_locs.shape[1])]
                 rows.append(np.hstack(columns))
-            switch_matrix.append(np.vstack(rows))
+            switch_locs = np.vstack(rows)
 
+            switch_matrix.append(switch_locs)
+
+        # switch_matrix: channel, height, width
         switch_matrix = np.array(switch_matrix)
         switch_matrix = np.transpose(switch_matrix, (1, 2, 0))
-
-        return MaxUnPooling(switch_matrix, maxpool_layer.pool_size)
+        return switch_matrix
 
     @staticmethod
-    def test(feature_maps):
+    def max_mask(x):
+        mask = np.zeros(np.prod(x.shape))
+        mask[np.argmax(x)] = 1
+        mask = np.reshape(mask, x.shape)
+        return mask
+
+    @staticmethod
+    def test(model, feature_maps):
         # test deconv layers
         d2d = DeConv2DModel.get_deconv2d(model.layers[1])
         rb = DeConv2DModel.get_deconv2d_reverse_bias(model.layers[1])
 
         test_model = Sequential()
-        test_model.add(Input(shape=(224, 224, 64)))
+        test_model.add(Input(shape=model.layers[1].output_shape[1:]))
         test_model.add(rb)
         test_model.add(d2d)
         test_model.summary()
@@ -256,7 +285,7 @@ def filter_fmap(fmap, i_filter, return_loc=True):
     fmap_filter_mask = np.reshape(fmap_filter_mask, fmap_filter.shape)
 
     fmap_mask = np.zeros(fmap.shape)
-    fmap_mask[:, :, :, i_filter] = fmap_filter_mask
+    fmap_mask[0, :, :, i_filter] = fmap_filter_mask
 
     fmap_filtered = fmap * fmap_mask
     print(fmap_filtered.shape)
@@ -299,7 +328,7 @@ if __name__ == "__main__":
     # prepare the feature map model
     for i, layer in enumerate(model.layers):
         print("{}:\t{}".format(i, layer))
-    lyid_feature_maps = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    lyid_feature_maps = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     fm_model = get_fmap_model(model, ixs_layers=lyid_feature_maps)
     fm_model.summary()
 
