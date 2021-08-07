@@ -117,6 +117,15 @@ class DeConv2DModel(Sequential):
                     cls.get_maxunpool2d(model.layers[i], current_feature_maps, lyid_feature_maps.index(i)))
         return deconv_layers
 
+    @classmethod
+    def from_conv2d_with_instance(cls, model, n_layers, input_sample):
+        lyid_feature_maps = list(range(1, n_layers))
+        fm_model = get_fmap_model(model, ixs_layers=lyid_feature_maps)
+        feature_maps = fm_model.predict(input_sample)
+        return cls.from_conv2d(model, n_layers=n_layers,
+                               current_feature_maps=feature_maps,
+                               lyid_feature_maps=lyid_feature_maps)
+
     def observation_field(self, loc):
         observation_field = (loc, loc)
         for i_layer, layer in enumerate(self.layers):

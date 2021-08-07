@@ -96,13 +96,17 @@ class DeConv1D(Conv1D, Deconv):
 class MaxUnPooling1D(Layer, Deconv):
     # basicall the same as Dense layer without activation
     # assert pool_size == strides
-    def __init__(self, switch_matrix, pool_size):
+    def __init__(self, switch_matrix, pool_size, output_size):
         super(MaxUnPooling1D, self).__init__()
         self.switch_matrix = K.constant(switch_matrix)
         self.pool_size = pool_size
+        self.output_size = output_size
 
     def call(self, inputs, **kwargs):
-        return tf.repeat(inputs, 2, axis=1) * self.switch_matrix
+        value = tf.repeat(inputs, self.pool_size, axis=1) * self.switch_matrix
+        output = np.zeros((self.output_size, value.shape[1]))
+        output[:value.shape[0], :] = value
+        return output
 
     def observation_field(self, field):
         return super().get_observation1d(field,
@@ -128,6 +132,15 @@ class DeConv1DModel(Sequential):
                     cls.get_maxunpool1d(model.layers[i], current_feature_maps, lyid_feature_maps.index(i)))
         return deconv_layers
 
+    @classmethod
+    def from_conv1d_with_instance(cls, model, n_layers, input_sample):
+        lyid_feature_maps = list(range(1, n_layers))
+        fm_model = cls.get_fmap_model(model, ixs_layers=lyid_feature_maps)
+        feature_maps = fm_model.predict(input_sample)
+        return cls.from_conv1d(model, n_layers=n_layers,
+                               current_feature_maps=feature_maps,
+                               lyid_feature_maps=lyid_feature_maps)
+
     def observation_field(self, loc):
         observation_field = (loc, loc)
         for i_layer, layer in enumerate(self.layers):
@@ -137,6 +150,10 @@ class DeConv1DModel(Sequential):
     @staticmethod
     def get_deconv1d_reverse_bias(conv1d_layer: Conv1D):
         return ReverseBiasLayer(conv1d_layer.get_weights()[1])
+
+    @staticmethod
+    def get_activation():
+        return DActivation("relu")
 
     @staticmethod
     def get_deconv1d(conv1d_layer: Conv1D):
@@ -171,10 +188,9 @@ class DeConv1DModel(Sequential):
 
         current_fmap = current_feature_maps[id_layer][0]
         previous_fmap = current_feature_maps[id_layer - 1][0]
-        assert current_fmap.shape[0] == previous_fmap.shape[0] // size
 
         switch_matrix = DeConv1DModel.switch_matrix_1d(current_fmap, previous_fmap, size)
-        return MaxUnPooling1D(switch_matrix, maxpool_layer.pool_size)
+        return MaxUnPooling1D(switch_matrix, maxpool_layer.pool_size, output_size=previous_fmap.shape[0])
 
     @staticmethod
     def max_mask(x):
@@ -185,6 +201,7 @@ class DeConv1DModel(Sequential):
 
     @staticmethod
     def switch_matrix_1d(fmap, vmap, size):
+        assert fmap.shape[0] * size <= vmap.shape[0] < (fmap.shape[0] + 1) * size
         switch_matrix = []
         for i in range(fmap.shape[0]):
             switch_locs = []
@@ -198,7 +215,15 @@ class DeConv1DModel(Sequential):
         n_channels = switch_matrix.shape[1]
         mask_by_channels = [np.concatenate(switch_matrix[:, i, :], axis=-1) for i in range(n_channels)]
         switch_matrix = np.transpose(mask_by_channels, (1, 0))
+        # switch_matrix: length, channel
         return switch_matrix
+
+    @staticmethod
+    def get_fmap_model(model, ixs_layers=(1, 3, 4, 6, 7, 9)):
+        outputs = [model.layers[i].output for i in ixs_layers]
+        fm_model = Model(inputs=model.inputs, outputs=outputs)
+        model.trainable = False
+        return fm_model
 
     @staticmethod
     def test(model, feature_maps):
@@ -214,13 +239,6 @@ class DeConv1DModel(Sequential):
 
         sig_re = test_model.predict(feature_maps[0])[0]
         plt.plot(sig_re)
-
-
-def get_fmap_model(model, ixs_layers=(1, 3, 4, 6, 7, 9)):
-    outputs = [model.layers[i].output for i in ixs_layers]
-    fm_model = Model(inputs=model.inputs, outputs=outputs)
-    model.trainable = False
-    return fm_model
 
 
 def get_deconv_model(model, n_layers, current_feature_maps, lyid_feature_maps):
