@@ -75,6 +75,18 @@ class MyDenseLayer(Layer):
 layer = MyDenseLayer(10)
 
 
+# multiple inputs:
+
+class mul(Layer):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def call(self, inputs):
+        inp1, inp2 = inputs
+        Z = inp1 * inp2
+        return Z
+
+
 # block inherite from tf.keras.Model
 # benefits:
 # - block.fit(), block.evaluate(), block.save()

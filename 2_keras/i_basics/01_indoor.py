@@ -12,14 +12,17 @@ from keras.optimizers import RMSprop
 from material.data import *
 
 # a typical Keras approach is bulid -> compile -> fit -> predict
-#  model=Sequential; model.add() ....
+#  model=Sequential(); model.add() ....
 #  model.compile(optimizer=, loss=, metrics=)
 #  model.fit(...)
 #  model.predict(...)
 
 x_train, y_train, x_test, y_test = mnist_data()
 
-# build model
+# step 1: build model
+# Sequential way to build model:
+
+# type 1:
 model = Sequential([
     Dense(16, input_shape=(784,), activation="relu"),
     Dense(32, activation="relu"),
@@ -28,7 +31,7 @@ model = Sequential([
 
 del model
 
-# another way
+# type 2:
 model = Sequential()
 model.add(Dense(16, input_shape=(784,), activation="relu"))
 model.add(Dense(2, activation="relu"))
@@ -36,19 +39,22 @@ model.add(Dense(2, activation="softmax"))
 
 del model
 
-# third way
+# Funtional way to build model
 x = Input(shape=(784,))
 h = Dense(16)(x)
 h = Dense(2)(h)
 y = Dense(2)(h)
 model = Model(inputs=x, outputs=y)
 
+# step 2: complie model
 # Another way to define your optimizer
 rmsprop = RMSprop(lr=0.001, rho=0.9, epsilon=1e-08, decay=0.0)
 
 # We add metrics to get more results you want to see
 model.compile(optimizer=rmsprop, loss='categorical_crossentropy', metrics=['accuracy'])
 
+# step 3: fit model
+# train the model
 history = model.fit(x_train, y_train, epochs=2, batch_size=32)
 
 # consider validation
@@ -66,7 +72,7 @@ history = model.fit(x=x_train,
 # print loss
 print(history.history['loss'][-1])
 
-# predict
+# step 4: model predict
 y_pred = model.predict(x_test[-100:])
 
 # evaluate model
