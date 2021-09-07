@@ -87,7 +87,7 @@ class CustomMasking(Masking):
 
 
 layer = CustomMasking(16)
-layer.compute_mask([1, 1, 1, 0, 0, 0])
+layer.compute_mask([[1, 1, 1, 0, 0, 0]])
 
 
 class MyLayer(Layer):
