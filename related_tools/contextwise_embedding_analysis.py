@@ -25,12 +25,13 @@ def mnist_data():
     return x_train, y_train, x_test, y_test
 
 
-def find_maxset(items, func_eval=lambda x: x):
+def find_maxset(items, func_eval=lambda x: x, return_indices=True):
     """
 
-    > find_maxset([1, 2, 1, 3, 1])
-    > #
+    > find_maxset([1.2, 2, 1.05, 3.1, 1.1], func_eval=lambda x: int(x))
+    > # [1.2, 1.05, 1.1]
 
+    :param return_indices: bool
     :param func_eval: functional handler , func_eval(item) = something which supports hashing equality
     :param items: List
     :return:
@@ -39,7 +40,11 @@ def find_maxset(items, func_eval=lambda x: x):
     values = [func_eval(item) for item in items]
     indices_maxset = locate_maxset(values)
     maxset = [items[i] for i in indices_maxset]
-    return maxset
+
+    if return_indices:
+        return maxset, indices_maxset
+    else:
+        return maxset
 
 
 def locate_maxset(items):
