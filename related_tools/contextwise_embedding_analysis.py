@@ -25,6 +25,36 @@ def mnist_data():
     return x_train, y_train, x_test, y_test
 
 
+def find_maxset_similiar(items,
+                      func_blur=lambda item: item,
+                      func_eval=lambda item: item,
+                      func_valid=lambda items: True):
+    """
+    todo: test this function
+    
+    return the maxset with repeating the blurring operation.
+
+    :param items, List
+    :param func_blur: function handler, Item -> Item
+        few rounds of blurring must make sure func_valid can definitly pass.
+    :param func_eval: functional handler , func_eval(item) = something which supports hashing equality
+    :param func_valid: function handler, List -> Bool
+    :return List: List of items
+    """
+
+    items_org = items
+
+    maxset, indices_maxset = find_maxset(items, func_eval=func_eval)
+    i = 0
+    maximum_trials = 1000
+    while not func_valid(maxset) and i <= maximum_trials:
+        items = [func_blur(item) for item in items]
+        maxset, indices_maxset = find_maxset(items, func_eval=func_eval)
+        i += 1
+    items_maxset = [items_org[i] for i in indices_maxset]
+    return items_maxset
+
+
 def find_maxset(items, func_eval=lambda x: x, return_indices=True):
     """
 
@@ -57,7 +87,7 @@ def locate_maxset(items):
     :return: List[int], location of the maximum appearance item
     """
 
-    sort_dict = sorting(items)
+    sort_dict = sorting_items(items)
     count_tuple = []
     for item, indices in sort_dict.items():
         count_tuple.append((item, len(indices)))
@@ -68,10 +98,10 @@ def locate_maxset(items):
     return indices_maxset
 
 
-def sorting(items):
+def sorting_items(items):
     """
 
-    > sorting([1, 2, 1, 3, 1])
+    > sorting_items([1, 2, 1, 3, 1])
     > # {1: [0,2,4], 2: [1], 3:[3] }
 
     :param items: List
@@ -86,14 +116,7 @@ def sorting(items):
     return sort_dict
 
 
-def plot_pic_sig(x, size):
-    plt.imshow(np.reshape(x, (size, size)))
-    plt.show()
-    plt.plot(x)
-    plt.show()
-
-
-def compress_subsample(x_sig, level=2):
+def blur_ta_subsampling(x_sig, level=2):
     x_sig = resample(x_sig, len(x_sig) // level)
     levels = len(x_sig) // level
     x_sig = pd.cut(x_sig, levels, labels=[str(i) for i in range(levels)])
@@ -101,8 +124,12 @@ def compress_subsample(x_sig, level=2):
     return x_sig_v
 
 
-def compress_subsample_normal(x_sig, level=2):
-    x_sig_v = compress_subsample(x_sig, level)
+def blur_ta_subsampling_normalize(x_sig, level=2):
+    """
+    time and amplitude subsampling
+
+    """
+    x_sig_v = blur_ta_subsampling(x_sig, level)
 
     # normalize
     max_ = max(x_sig_v)
@@ -110,17 +137,33 @@ def compress_subsample_normal(x_sig, level=2):
     return x_sig_v
 
 
+def eval_list2str(list):
+    values = [round(v, 2) for v in list]
+    return "_".join(values)
+
+
+def valid_four(list):
+    return len(list) >= 4
+
+
 def show_effect(x):
     plot_pic_sig(x, 28)
 
-    x = compress_subsample_normal(x, 2)
+    x = blur_ta_subsampling_normalize(x, 2)
     plt.imshow(np.reshape(x, (28, 28 // 2)))
     plt.show()
     plt.plot(x)
     plt.show()
 
-    x = compress_subsample_normal(x, 2)
+    x = blur_ta_subsampling_normalize(x, 2)
     plt.imshow(np.reshape(x, (28, 28 // 4)))
+    plt.show()
+    plt.plot(x)
+    plt.show()
+
+
+def plot_pic_sig(x, size):
+    plt.imshow(np.reshape(x, (28, size)))
     plt.show()
     plt.plot(x)
     plt.show()
@@ -135,4 +178,13 @@ if __name__ == "__main__":
     x = x_train[0]
     # show_effect(x)
 
-    x = [compress_subsample(xi) for xi in x]
+    maxset = find_max_similiar(
+        x_train,
+        func_blur=lambda item: blur_ta_subsampling_normalize(item),
+        func_eval=eval_list2str,
+        func_valid=valid_four
+    )
+
+    for x in maxset:
+        plt.imshow(np.reshape(x, (28, 28)))
+        plt.show()
