@@ -44,7 +44,11 @@ Other related commands:
     deactivate
 ```
 
-## (Optional) Step 3: add this conda env to jupyter notebook
+## Step 3: Check whether tensorflow uses GPU
+
+Run `_test_gpu.ipynb`.
+
+## (Optional) Step 4: add this conda env to jupyter notebook
 
 ```bash
     conda activate tf_gpu
@@ -54,8 +58,16 @@ Other related commands:
     jupter notebook
 ```
 
-## (Optional) Step 4: add this conda env to pycharm
+## (Optional) Step 5: add this conda env to pycharm
 
 Go to `file -> settings -> Project: -> python interpreter -> (the gear sign after the env) -> add`.
 
 Add this existed env:  `~/anaconda3/envs/tf_gpu/bin/python3`
+
+
+# Alternative
+
+The traditional way with `Nvidia driver + cuda + cuDNN + Tensorflow-gpu` reference: 
+
+https://wandb.ai/wandb/common-ml-errors/reports/How-to-Correctly-Install-TensorFlow-in-a-GPU-Enabled-Laptop---VmlldzozMDYxMDQ
+
