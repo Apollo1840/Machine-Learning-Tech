@@ -8,7 +8,7 @@ ref: [How to Install Anaconda on Ubuntu 18.04 and 20.04](https://phoenixnap.com/
 ```bash
 
   cd /tmp
-  curl –O https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh
+  wget -o Anaconda3-2020.02-Linux-x86_64.sh https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh
   bash Anaconda3-2020.02-Linux-x86_64.sh
   
   # optional: check whether is it successfully installed
@@ -52,6 +52,10 @@ Run `_test_gpu.ipynb`.
 
 ```bash
     conda activate tf_gpu
+    
+    # optional: install jupyter notebook 
+    pip3 install jupyter
+    
     python -m ipykernel install --user --name=tf_gpu
     
     # optional: check whether is it successfully added to the kernels
