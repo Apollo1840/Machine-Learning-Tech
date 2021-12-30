@@ -38,7 +38,7 @@ class TransformerBlock(Layer):
         |   dropout & layernorm  |
         +------------------------+
                 |
-        +-----------------------+
+        +-----------------------+yy
         |   fully connected x 2 |
         +-----------------------+
                 |
