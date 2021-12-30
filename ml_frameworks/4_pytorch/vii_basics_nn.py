@@ -30,24 +30,20 @@ params = list(net.parameters())
 print(len(params))
 print(params[0].size())  # conv1's .weight
 
+# data
 input_x = torch.randn(1, 1, 32, 32)
 out_y = net(input_x)
 print(out_y)
+target = torch.tensor(np.random.randn(1, 10), dtype=torch.float)
 
-net.zero_grad()
-out_y.backward(torch.randn(1, 10))
-
+# train the model
 # create your optimizer
 optimizer = optim.SGD(net.parameters(), lr=0.01)
 
 # before training in one batch
-optimizer.zero_grad()   # zero the gradient buffers
+optimizer.zero_grad()  # zero the gradient buffers
 
-output = net(input_x)
+loss = nn.MSELoss()(net(input_x), target)
+loss.backward()  # give the parameters required ,grad (the delta w)
 
-target = torch.tensor(np.random.randn(1,10), dtype=torch.float)
-loss = nn.MSELoss()(output, target)
-loss.backward()   # give the parameters required ,grad (the delta w)
-
-optimizer.step()    # Does the update, defines how parameters do with
-                    # the .grad data.
+optimizer.step()  # Does the update, defines how parameters do with the .grad data.
