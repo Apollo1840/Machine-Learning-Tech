@@ -13,7 +13,7 @@ class PytorchNNPro(PytorchNN):
 
     def summary(self):
         print(self)
-        input_shape = (3, 224, 224)
+        input_shape = (28, 28)
         summary(self, input_shape)
 
     def predict(self, x):
@@ -52,5 +52,6 @@ if __name__ == '__main__':
     print("Saved PyTorch Model State to model.pth")
 
     # load
-    model = PytorchNN()
-    model.load_state_dict(torch.load("model.pth"))
+    model = torch.load("models/model.pth")
+    # model = PytorchNN()
+    # model.load_state_dict(torch.load("model.pth"))
