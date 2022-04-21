@@ -10,7 +10,7 @@ from keras.preprocessing import sequence
 from keras.utils.np_utils import to_categorical
 
 
-def mnist_data():
+def mnist_data(as_img=False):
     # download the mnist to the path '~/.keras/datasets/' if it is the first time to be called
     # X shape (60,000 28x28), y shape (10,000, )
     from keras.datasets import mnist
@@ -22,13 +22,17 @@ def mnist_data():
     y_train = to_categorical(y_train, num_classes=10)
     y_test = to_categorical(y_test, num_classes=10)
 
+    if as_img:
+        x_train = x_train.reshape((len(x_train), 28, 28, 1))
+        x_test = x_test.reshape((len(x_test), 28, 28, 1))
+
     return x_train, y_train, x_test, y_test
 
 
 def find_maxset_similiar(items,
-                      func_blur=lambda item: item,
-                      func_eval=lambda item: item,
-                      func_valid=lambda items: True):
+                         func_blur=lambda item: item,
+                         func_eval=lambda item: item,
+                         func_valid=lambda items: True):
     """
     todo: test this function
     

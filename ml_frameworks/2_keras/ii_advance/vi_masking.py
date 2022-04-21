@@ -1,3 +1,10 @@
+"""
+referrence:
+
+https://tensorflow.google.cn/guide/keras/masking_and_padding?hl=zh-cn
+
+"""
+
 import tensorflow as tf
 from keras.layers import Layer
 from keras.preprocessing.sequence import pad_sequences
@@ -14,18 +21,21 @@ print(padded_inputs)
 
 # ------------------------------------------------------------------
 # method 1: use support masking layer
-embedding = Embedding(input_dim=5000, output_dim=16)
+embedding = Embedding(input_dim=5000, output_dim=2, mask_zero=True)
 masked_output = embedding(padded_inputs)
+print(masked_output[0])
+# ??? not working ???
+# this mask will working in the following layers
 
-print(masked_output._keras_mask)
+# print(masked_output._keras_mask)
 
 # ------------------------------------------------------------------
 # method 2: use masking layer
 
 # Simulate the embedding lookup by expanding the 2D input to 3D,
-# with embedding dimension of 10.
+# with embedding dimension of 2.
 SimEmbedding = Lambda(lambda inputs: tf.cast(
-    tf.tile(tf.expand_dims(inputs, axis=-1), [1, 1, 10]), tf.float32
+    tf.tile(tf.expand_dims(inputs, axis=-1), [1, 1, 2]), tf.float32
 ))
 
 unmasked_embedding = SimEmbedding(padded_inputs)
@@ -71,6 +81,7 @@ class CustomMasking(Masking):
 
     def compute_mask(self, inputs):
         """
+        why not directly use tf.cast??
 
         :param: inputs: [batch, token]
         """
@@ -103,5 +114,22 @@ class MyLayer(Layer):
         output = self.lstm(x, mask=mask)  # The layer will ignore the masked values
         return output
 
+
 layer = MyLayer()
 layer(padded_inputs)
+
+
+class BoolMasking(Layer):
+    """
+    change list of 0,1 masking to keras masking
+
+        > inputs_, mask = inputs
+        > mask_ = self.bmask(mask)
+        > x_out = self.lstm(inputs_, mask=mask_)
+
+    """
+
+    def call(self, inputs, training):
+        mask = tf.expand_dims(inputs, axis=-1)
+        mask = tf.cast(mask, tf.bool)
+        return mask

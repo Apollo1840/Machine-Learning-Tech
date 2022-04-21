@@ -9,7 +9,6 @@ from keras.models import Model, Sequential
 from keras.layers import Dense, Conv2D, Dropout, BatchNormalization, Input, Reshape, Flatten, Deconvolution2D, \
     Conv2DTranspose, MaxPooling2D, UpSampling2D
 from keras.layers.advanced_activations import LeakyReLU
-from keras.optimizers import adam
 
 
 class CAE():
