@@ -85,7 +85,7 @@ def ConvolutionalAutoEncoder():
 
         l = Flatten()(e)
 
-        l = Dense(49, activation='softmax')(l)
+        l = Dense(49, activation='relu')(l)
 
         return Model(inp, l, name="encoder")
 
@@ -134,7 +134,7 @@ def ConvolutionalAutoEncoder2():
 
         l = Flatten()(e)
 
-        l = Dense(49, activation='softmax')(l)
+        l = Dense(49, activation='relu')(l)
 
         return Model(inp, l, name="encoder")
 
