@@ -6,7 +6,7 @@ https://pytorch.org/tutorials/intermediate/char_rnn_classification_tutorial.html
 import torch
 from torch import nn
 
-from material.data import fminist_datagen, fminist_classes
+from material.data import mnist_datagen
 
 
 class RNN(nn.Module):

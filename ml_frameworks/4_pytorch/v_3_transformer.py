@@ -32,10 +32,19 @@ class PositionalEncoding(nn.Module):
 class TransformerModel(nn.Module):
 
     def __init__(self, ntoken, ninp, nhead, nhid, nlayers, dropout=0.5):
+        """
+
+        :param ntoken: num_tokens
+        :param ninp: fc dimension within transformer block
+        :param nhead: num_heads
+        :param nhid:  dim_key, dim_value, dim_query
+        :param nlayers: num_layers of  multi-head-attention layer
+        :param dropout:
+        """
         super(TransformerModel, self).__init__()
         self.model_type = 'Transformer'
         self.pos_encoder = PositionalEncoding(ninp, dropout)
-        encoder_layers = TransformerEncoderLayer(ninp, nhead, nhid, dropout)
+        encoder_layers = TransformerEncoderLayer(ninp, nhead, nhid, dropout)  # multi-head-attention layers
         self.transformer_encoder = TransformerEncoder(encoder_layers, nlayers)
         self.encoder = nn.Embedding(ntoken, ninp)
         self.decoder = nn.Linear(ninp, ntoken)

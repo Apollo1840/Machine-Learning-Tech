@@ -10,13 +10,14 @@ install:
 1. Learn how to build pytorch model and train/use it like keras (i). 
 2. train with gpu (ii).
 3. learn how to view, store and load model (iii).
-4. more pytorch models. (iv, v)
-5. learn the basics and understand how does pytorch model is trained. (vi, vii)
-6. learn how to create custom layers. (viii)
-7. learn how to create custom loss.
-8. learn more models.
-9. scheduler (callbacks in keras).
-10. learn tricks from others repo.
+4. detailed operations of pytorch model (iv).
+5. more pytorch models. (v_*)
+6. learn the basics and understand how does pytorch model is trained. (vi)
+7. learn how to create custom layers. (vii)
+8. learn how to create custom loss. (viii)
+9. scheduler (callbacks in keras). (ix)
+10. multiple GPU, device control (x)
+11. learn tricks from others repo. (t_*)
 
 ## material
 https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html
