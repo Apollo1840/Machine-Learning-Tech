@@ -21,7 +21,16 @@ y.backward()
 print(x.grad)
 
 # optimize with backprop information
+optimizer = optim.Adam([x], lr=0.1)
+
 y = 2 * x
+print(x)
+
+optimizer.zero_grad()
+y.backward()
+optimizer.step()
+
+print(x)
 
 
 # 1. basic train
@@ -45,6 +54,9 @@ for x, y in datagen:
     optimizer.step()
 
     print(loss)
+
+# ---------------------------------------------------------------------------------------
+
 
 # 2: initialization
 # if want variable, set requires_grad=True
@@ -73,26 +85,32 @@ print(x)
 x = x.new_ones(5, 3)      # new_* methods take in sizes
 print(x)
 
+# ----------------------------------------------------------------------------------------
 
 # 3: operation
-# single element: reshape
 x = torch.randn(4, 4)
-y = x.view(16)  # : reshape
+x2 = torch.randn(4, 4)
+x3 = torch.randn(3, 2)
+
+# single element: reshape
+y = x.view(16)    # : reshape
 z = x.view(-1, 8)  # the size -1 is inferred from other dimensions
+
+# get size
 print(x.size(), y.size(), z.size())
 
 # add
-x = torch.rand(5, 3)
-y = torch.rand(5, 3)
-z = torch.add(x, y)
+z = torch.add(x, x2)
 print(z)
 
 # matmul
-x = torch.ones(1, 2, requires_grad=True)
-y = torch.matmul(x, x.T)
+y = torch.matmul(x3, x3.T)
 # print(y.grad_fn)
 
 # calculate gradient for each initialized variable
-print(x.grad)
+x3 = torch.randn(3, 2)
+y = torch.matmul(x3, x3.T)
+
+print(y.grad_fn)
 y.backward()
-print(x.grad)  # grad is more like delta x
+print(x3.grad)   # grad is more like delta x

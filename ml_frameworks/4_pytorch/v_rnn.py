@@ -1,7 +1,8 @@
 """
 https://pytorch.org/tutorials/intermediate/char_rnn_classification_tutorial.html
 
-when deal with tokens, play the tricks in training phase:
+rnn model is actually simple, the tricks is played during the training phase:
+
     > for i in range(line_tensor.size()[0]):
     >    output, hidden = rnn(line_tensor[i], hidden)
 

@@ -7,9 +7,9 @@ install:
 
 ## Learning trace
 
-1. Learn how to build pytorch model and train it like keras (i). 
+1. Learn how to build pytorch model and train/use it like keras (i). 
 2. train with gpu (ii).
-3. learn how to view, use, store and load model (iii).
+3. learn how to view, store and load model (iii).
 4. more pytorch models. (iv, v)
 5. learn the basics and understand how does pytorch model is trained. (vi, vii)
 6. learn how to create custom layers. (viii)

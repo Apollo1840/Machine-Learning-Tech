@@ -16,17 +16,12 @@ class PytorchNNPro(PytorchNN):
         input_shape = (28, 28)
         summary(self, input_shape)
 
-    def predict(self, x):
-        self.eval()
-
-        x = x.to("gpu")
-        with torch.no_grad():
-            y_pred = self(x)
-
-        return y_pred
-
     def save(self, filename):
         torch.save(self.state_dict(), filename)
+
+    @classmethod
+    def load(cls, filename):
+        return torch.load(filename)
 
 
 if __name__ == '__main__':
@@ -52,6 +47,6 @@ if __name__ == '__main__':
     print("Saved PyTorch Model State to model.pth")
 
     # load
-    model = torch.load("models/model.pth")
+    model = PytorchNN.load("models/model.pth")
     # model = PytorchNN()
     # model.load_state_dict(torch.load("model.pth"))

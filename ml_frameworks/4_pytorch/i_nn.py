@@ -37,7 +37,7 @@ class PytorchNN(NeuralNetwork):
     # transform the pytorch model to something similar to Keras model
 
     def fit_datagen(self, datagen, epochs=12):
-        self.train()
+        self.train()  # switch to train mode
 
         for t in range(epochs):
             print(f"Epoch {t + 1}\n-------------------------------")
@@ -49,20 +49,9 @@ class PytorchNN(NeuralNetwork):
 
         print("Done!")
 
-    # helper functions
-    def backprop(self, x, y):
-        # Backpropagation
-        self.optimizer.zero_grad()
-
-        y_pred = self(x)
-        self.loss(y_pred, y).backward()
-        # regularly they are called: (outputs, labels)
-
-        self.optimizer.step()
-
     def eval_datagen(self, datagen):
         # eval model
-        self.eval()  # change to evaluation mode
+        self.eval()  # switch to evaluation mode
 
         test_loss, correct = 0, 0
         with torch.no_grad():
@@ -75,6 +64,36 @@ class PytorchNN(NeuralNetwork):
         test_loss_avg = test_loss / size  # avg_loss
         acc = correct / size  # accuracy
         print(f"Test Error: \n Accuracy: {(100 * acc):>0.1f}%, Avg loss: {test_loss_avg:>8f} \n")
+
+    def predict(self, x):
+        self.eval()
+
+        with torch.no_grad():
+            y_pred = self(x)
+
+        return y_pred
+
+    # helper functions
+    def backprop(self, x, y):
+        """
+        Backpropagation
+
+        works as .step_function() in tensorflow.
+
+        :param: x: x_batch
+        :param: y: y_batch
+        """
+
+        # 1) clear gradient:
+        self.optimizer.zero_grad()
+
+        # 2) calculate the gradient:
+        y_pred = self(x)
+        self.loss(y_pred, y).backward()
+        # regularly (y_pred, y) are called: (outputs, labels)
+
+        # 3) update the paramters:
+        self.optimizer.step()
 
 
 if __name__ == '__main__':
