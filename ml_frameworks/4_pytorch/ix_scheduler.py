@@ -18,13 +18,16 @@ lrs = []
 
 for i in range(10):
     optimizer.step()
+    scheduler.step()
 
     lrs.append(optimizer.param_groups[0]["lr"])
     #  print("Factor = ",0.1 if i!=0 and i%2!=0 else 1," , Learning Rate = ",optimizer.param_groups[0]["lr"])
 
-    scheduler.step()
-
 plt.plot(range(10), lrs)
+
+# if you want to use customized Scheduler, you could do:
+# > for param_group in optimizer.param_groups:
+# >     param_group["lr"] = ...
 
 
 # -------------------------------------------------------------------------------------------------------

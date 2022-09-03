@@ -19,6 +19,57 @@ install:
 10. multiple GPU, device control (x)
 11. learn tricks from others repo. (t_*)
 
+## tricks
+
+### load_data
+Normally we do not load all the data into RAM.
+We use something like `datasets.ImageFolder` to store all the links(filepaths) of the data.
+When initialize such LinksStore we also define our `torchvision.transforms` as data preprocessing steps, 
+eg. resize, normalize. etw.
+
+We use something like `DataLoader`, which is connected to the LinksStore as the actual data generator.
+Inside the `DataLoader`, how to load the data is defined, as well as batch_size. 
+And here comes the first optimization trick, 
+we could use **num_workers** and **pin_memory** to speed up training process by speed up batch data loading happened in train step.
+
+### auto-cast
+Use autocast while computing the loss with increase speed.
+
+```python
+    with torch.cuda.amp.autocast():
+        loss = ...
+```
+
+
+### larger batch_size when RAM is not enough.
+The trick is very simple. Just zero your gradient not after each batch, but some batch.
+
+```python
+    # increase batch_size 8x
+    if (data_iter_step + 1) % 8 == 0:
+        optimizer.zero_grad()
+
+    #  if data_iter_step % 8 == 0:
+    #       lr_sched.adjust_learning_rate(optimizer, data_iter_step / len(data_loader) + epoch)
+    
+    # loss_scaler(loss, optimizer, parameters, update_grad=(data_iter_step + 1) % accum_iter == 0)
+```
+
+
+### loss_scaler
+This is a numerical trick to help computer to calculate loss and its gradient.
+
+```python
+    loss_scaler = NativeScaler()
+    
+    # loss = ...
+    # model = ...
+    # optimizer = ...
+    loss_scaler(loss, optimizer, parameters=model.parameters())
+    # loss.backward() and optimzer.step() is inside loss_scaler
+```
+
+
 ## material
 https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html
 
