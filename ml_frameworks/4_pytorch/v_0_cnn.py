@@ -42,6 +42,8 @@ class PytorchNN(CNN):
     def fit_datagen(self, datagen):
         self.train()
         for batch_idx, (x, y) in tqdm(enumerate(datagen), total=len(datagen)):
+            x, y = x.to("cuda"), y.to("cuda")
+
             self.optimizer.zero_grad()
 
             y_pred = self(x)
@@ -55,6 +57,8 @@ class PytorchNN(CNN):
         correct = 0
         with torch.no_grad():
             for x, y in datagen:
+                x, y = x.to("cuda"), y.to("cuda")
+
                 y_pred = self(x)
                 test_loss += self.loss(y_pred, y, reduction='sum').item()  # sum up batch loss
                 pred = y_pred.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
@@ -65,6 +69,8 @@ class PytorchNN(CNN):
         print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
             test_loss, correct, len(datagen.dataset),
             100. * correct / len(datagen.dataset)))
+
+        return test_loss
 
 
 def main():
