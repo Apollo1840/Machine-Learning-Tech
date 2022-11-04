@@ -39,17 +39,36 @@ class CNN(nn.Module):
 
 class PytorchNN(CNN):
 
-    def fit_datagen(self, datagen):
+    def fit_datagen(self, datagen, epochs=12, verbose=False):
         self.train()
+<<<<<<< HEAD
         for batch_idx, (x, y) in tqdm(enumerate(datagen), total=len(datagen)):
             x, y = x.to("cuda"), y.to("cuda")
 
             self.optimizer.zero_grad()
+=======
+>>>>>>> bff9f45b65ec10360621155166955b9ba8f93579
 
-            y_pred = self(x)
-            self.loss(y_pred, y).backward()
+        loss_values = []
+        for epoch in range(epochs):
+            running_loss = 0.0
+            for batch_idx, (x, y) in tqdm(enumerate(datagen), total=len(datagen)):
+                self.optimizer.zero_grad()
 
-            self.optimizer.step()
+                y_pred = self(x)
+                self.loss(y_pred, y).backward()
+
+                self.optimizer.step()
+
+                running_loss += self.loss(y_pred, y).item() * len(x)
+
+            loss_value = running_loss/len(datagen)
+            loss_values.append(loss_values)
+
+            if verbose:
+                print("Epoch {}/{}: loss: {}".format(epoch, epochs, loss_value))
+
+        return {"history": {"loss": loss_values}}
 
     def eval_datagen(self, datagen):
         self.eval()
