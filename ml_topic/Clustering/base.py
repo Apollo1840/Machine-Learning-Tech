@@ -12,6 +12,11 @@ from scipy.optimize import linear_sum_assignment
 class SemiSupervisedClustering():
     # taken from scikit-learn (https://goo.gl/1RYPP5)
 
+    def __init__(self, n_components, max_iter=300, tol=1e-4):
+        self.n_components = n_components
+        self.max_iter = max_iter
+        self.tol = tol
+
     @classmethod
     def initialize_centroids(cls, X, k, method="random", verbose=False):
         if method == 'random':
@@ -49,6 +54,19 @@ class SemiSupervisedClustering():
         X_np = np.array(X)
         variances = np.var(X_np, axis=0)
         return tol * np.mean(variances)
+
+    @classmethod
+    def update_centroids(cls, X, assignments, k):
+        """ Update centroids based on current cluster assignments """
+        n_features = X.shape[1]
+        centroids = np.zeros((k, n_features))
+
+        for cluster_idx in range(k):
+            cluster_points = X[assignments == cluster_idx]
+            if len(cluster_points) > 0:
+                centroids[cluster_idx] = np.mean(cluster_points, axis=0)
+
+        return centroids
 
     @classmethod
     def scatter_cluster_points_with_labeled(cls, X, label_assignments, cluster_assignments, n_labeled, n_samples=6000,
@@ -110,7 +128,7 @@ class SemiSupervisedClustering():
 
         start_index = 0
         current_label = label_indices[start_index]
-        for i in tqdm(range(n)):
+        for i in range(n):
             if label_indices[i] != current_label:
                 label_indices_map.update({current_label: (start_index, i)})
                 start_index = i

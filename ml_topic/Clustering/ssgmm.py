@@ -1,0 +1,72 @@
+import numpy as np
+from sklearn.mixture import GaussianMixture
+
+class SemiSupervisedGMM:
+    def __init__(self, n_components, max_iter=100, tol=1e-3, reg_covar=1e-6):
+        """
+        Initialize the Semi-Supervised Gaussian Mixture Model with diagonal covariance.
+
+        :param n_components: Number of mixture components.
+        :param max_iter: Maximum number of iterations.
+        :param tol: Tolerance for convergence.
+        :param reg_covar: Regularization added to the diagonal of covariance matrices.
+        """
+        self.n_components = n_components
+        self.max_iter = max_iter
+        self.tol = tol
+        self.reg_covar = reg_covar
+        self.gmm = GaussianMixture(n_components=n_components, max_iter=max_iter, tol=tol,
+                                   reg_covar=reg_covar, covariance_type='diag')
+
+    def fit(self, X_unlabeled, X_labeled, y_labeled):
+        """
+        Fit the model using both labeled and unlabeled data.
+
+        :param X_unlabeled: Unlabeled data points.
+        :param X_labeled: Labeled data points.
+        :param y_labeled: Labels for the labeled data points.
+        """
+        # Initialize GMM parameters using labeled data
+        self._initialize_parameters(X_labeled, y_labeled)
+
+        # Fit the GMM using both labeled and unlabeled data
+        X_combined = np.vstack((X_unlabeled, X_labeled))
+        self.gmm.fit(X_combined)
+
+    def _initialize_parameters(self, X_labeled, y_labeled):
+        """
+        Initialize GMM parameters using labeled data with regularization and diagonal covariance.
+
+        :param X_labeled: Labeled data points.
+        :param y_labeled: Labels for the labeled data points.
+        """
+        labels = np.unique(y_labeled)
+        if len(labels) != self.n_components:
+            raise ValueError("Number of unique labels must equal the number of GMM components.")
+
+        means = np.array([X_labeled[y_labeled == label].mean(axis=0) for label in labels])
+        covariances = np.array([np.var(X_labeled[y_labeled == label], axis=0) + self.reg_covar for label in labels])
+
+        self.gmm.means_init = means
+        self.gmm.precisions_init = 1.0 / covariances
+
+    def predict(self, X):
+        """
+        Predict the labels for the given data points.
+
+        :param X: Data points to predict labels for.
+        :return: Predicted labels.
+        """
+        return self.gmm.predict(X)
+
+    def predict_proba(self, X):
+        """
+        Predict the probabilities for each component for the given data points.
+
+        :param X: Data points to predict probabilities for.
+        :return: Predicted probabilities.
+        """
+        return self.gmm.predict_proba(X)
+
+    def centroids(self):
+        return self.gmm.means_

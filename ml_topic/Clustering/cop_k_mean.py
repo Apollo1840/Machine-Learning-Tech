@@ -8,6 +8,40 @@ from base import SemiSupervisedClustering
 
 class CopKMean(SemiSupervisedClustering):
 
+    def fit(self, X, labels=None, must_link=None, cannot_link=None, initialization='random', verbose=False):
+        if labels is not None:
+            self.must_link, self.cannot_link = self.labels_to_constraints(labels, verbose=verbose)
+        else:
+            self.must_link, self.cannot_link = must_link, cannot_link
+
+        self.tol = self.calculate_tolerance(self.tol, X)
+
+        if verbose:
+            print("initializing centroids...")
+
+        self.centroids = self.initialize_centroids(X, self.n_components, initialization, verbose=verbose)
+
+    def predict(self, X, verbose=False):
+        cluster_assignments = np.zeros(X.shape[0], dtype=int)
+
+        for _ in tqdm(range(self.max_iter), desc="iterations", disable=not verbose):
+            cluster_assignments = self.assign_clusters_constrained(X, self.centroids, self.must_link, self.cannot_link,
+                                                                   verbose=verbose)
+
+            # Update centroids
+            new_centroids = self.update_centroids(X, cluster_assignments, self.n_components)
+
+            # Check for convergence based on centroids shift
+            shift = sum(self.euclidean_distance(new_centroids[i], self.centroids[i]) for i in range(self.n_components))
+            if verbose:
+                print("updated centroids with total distance as: {:.3}/{:.3}".format(shift, self.tol))
+            if shift <= self.tol:
+                break
+
+            self.centroids = new_centroids
+
+        return cluster_assignments
+
     @classmethod
     def fit_transform(cls, X, k, must_link=None, cannot_link=None, initialization='random', max_iter=300, tol=1e-4,
                       verbose=False):
@@ -91,19 +125,6 @@ class CopKMean(SemiSupervisedClustering):
                     break
 
         return assignments
-
-    @classmethod
-    def update_centroids(cls, X, assignments, k):
-        """ Update centroids based on current cluster assignments """
-        n_features = X.shape[1]
-        centroids = np.zeros((k, n_features))
-
-        for cluster_idx in range(k):
-            cluster_points = X[assignments == cluster_idx]
-            if len(cluster_points) > 0:
-                centroids[cluster_idx] = np.mean(cluster_points, axis=0)
-
-        return centroids
 
 
 class CopKMean2(CopKMean):
