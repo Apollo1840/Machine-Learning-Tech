@@ -6,12 +6,14 @@ import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from sklearn.metrics.pairwise import euclidean_distances
 
+from scipy.optimize import linear_sum_assignment
+
 
 class SemiSupervisedClustering():
     # taken from scikit-learn (https://goo.gl/1RYPP5)
 
     @classmethod
-    def initialize_centroids(cls, X, k, method="random"):
+    def initialize_centroids(cls, X, k, method="random", verbose=False):
         if method == 'random':
             ids = list(range(len(X)))
             random.shuffle(ids)
@@ -28,7 +30,7 @@ class SemiSupervisedClustering():
             closest_dist_sq = np.full(n_samples, np.inf)
 
             # Iterate over the remaining centers
-            for _ in tqdm(range(1, k), desc="initialize centroids", total=k-1):
+            for _ in tqdm(range(1, k), desc="initialize centroids", total=k - 1, disabel=not verbose):
                 # Update the distance array for the newest center only
                 dist_sq = np.sum((X_np - centers[-1]) ** 2, axis=1)
                 closest_dist_sq = np.minimum(closest_dist_sq, dist_sq)
@@ -48,24 +50,36 @@ class SemiSupervisedClustering():
         variances = np.var(X_np, axis=0)
         return tol * np.mean(variances)
 
-    @staticmethod
-    def scatter_cluster_points_with_labeled(X, cluster_assignments, labeled_labels, n_samples=6000):
+    @classmethod
+    def scatter_cluster_points_with_labeled(cls, X, label_assignments, cluster_assignments, n_labeled, n_samples=6000,
+                                            split=False):
         # Create a t-SNE model
         tsne = TSNE(n_components=2, perplexity=30, n_iter=300, random_state=42)
 
         # Fit the model to your data (X)
         X_tsne = tsne.fit_transform(X[:n_samples])
 
+        cluster_assignments = cls.rematch_cluster_assignments(label_assignments, cluster_assignments)
+
         # Scatter plot for all data points with cluster assignments
         plt.figure(figsize=(10, 6))
 
-        plt.scatter(X_tsne[:len(labeled_labels), 0], X_tsne[:len(labeled_labels), 1], s=20, c=labeled_labels,
-                    cmap='rainbow', marker="x", alpha=1)
-        plt.colorbar(label='Label Assignments')
+        cmap = plt.get_cmap('rainbow', len(set(label_assignments)))
 
-        plt.scatter(X_tsne[len(labeled_labels):6000, 0], X_tsne[len(labeled_labels):6000, 1],
-                    c=cluster_assignments[len(labeled_labels):6000], s=100, cmap='rainbow', alpha=0.05)
+        plt.scatter(X_tsne[n_labeled:n_samples, 0], X_tsne[n_labeled:n_samples, 1],
+                    c=cluster_assignments[n_labeled:n_samples], s=100, cmap=cmap, alpha=0.15)
         plt.colorbar(label='Cluster Assignments')
+
+        if split:
+            plt.title('t-SNE Visualization with Cluster Assignments')
+            plt.xlabel('t-SNE Dimension 1')
+            plt.ylabel('t-SNE Dimension 2')
+            plt.show()
+            plt.figure(figsize=(10, 6))
+
+        plt.scatter(X_tsne[:n_labeled, 0], X_tsne[:n_labeled, 1], s=20, c=label_assignments[:n_labeled],
+                    cmap=cmap, edgecolors="black", linewidth=1, alpha=1)
+        plt.colorbar(label='Label Assignments')
 
         plt.title('t-SNE Visualization with Cluster Assignments')
         plt.xlabel('t-SNE Dimension 1')
@@ -73,7 +87,7 @@ class SemiSupervisedClustering():
         plt.show()
 
     @classmethod
-    def label_to_constraints(cls, label_indices):
+    def labels_to_constraints(cls, label_indices, verbose=False):
         """
 
         :param label_indices: eg. [0, 0, 0, 1, 1, 2, 2]
@@ -103,14 +117,14 @@ class SemiSupervisedClustering():
                 current_label = label_indices[start_index]
         label_indices_map.update({current_label: (start_index, n)})
 
-        for i in tqdm(range(n), desc="label to constraints"):
+        for i in tqdm(range(n), desc="label to constraints", disable=not verbose):
             start, end = label_indices_map[label_indices[i]]
             must_link.update({i: {j for j in range(start, end) if i != j}})
             cannot_link.update({i: {j for j in range(start)} | {j for j in range(end, n)}})
         return must_link, cannot_link
 
     @staticmethod
-    def convert_and_expand_constraints(must_link, cannot_link, n):
+    def tuples_to_constraints(must_link, cannot_link, n):
         """
         Example:
                   - must_link = [(0, 1), (3, 4)]
@@ -173,3 +187,30 @@ class SemiSupervisedClustering():
     @staticmethod
     def euclidean_distance(x1, x2):
         return euclidean_distances([x1], [x2])[0][0]
+
+    @staticmethod
+    def rematch_cluster_assignments(label_assignments, cluster_assignments):
+        """
+        Rematch cluster assignments based on the Hungarian algorithm to align with label assignments.
+
+        :param label_assignments: List of true labels.
+        :param cluster_assignments: List of assigned cluster labels.
+        :return: Rematched cluster assignments.
+        """
+        # Create a confusion matrix
+        n_clusters = max(max(label_assignments), max(cluster_assignments)) + 1
+        confusion_matrix = np.zeros((n_clusters, n_clusters), dtype=np.int64)
+
+        for true_label, cluster_label in zip(label_assignments, cluster_assignments):
+            confusion_matrix[true_label][cluster_label] += 1
+
+        # Apply the Hungarian algorithm to find the optimal assignment
+        row_ind, col_ind = linear_sum_assignment(-confusion_matrix)
+
+        # Map from old to new cluster assignments
+        remap = {old: new for old, new in zip(col_ind, row_ind)}
+
+        # Rematch cluster assignments
+        rematched_cluster_assignments = [remap[cluster] for cluster in cluster_assignments]
+
+        return rematched_cluster_assignments

@@ -26,11 +26,11 @@ class CopKMean(SemiSupervisedClustering):
         if verbose:
             print("initializing centroids...")
 
-        centroids = cls.initialize_centroids(X, k, initialization)
+        centroids = cls.initialize_centroids(X, k, initialization, verbose=verbose)
         cluster_assignments = np.zeros(X.shape[0], dtype=int)
 
-        for _ in tqdm(range(max_iter), desc="iterations"):
-            cluster_assignments = cls.assign_clusters_constrained(X, centroids, must_link, cannot_link)
+        for _ in tqdm(range(max_iter), desc="iterations", disable=not verbose):
+            cluster_assignments = cls.assign_clusters_constrained(X, centroids, must_link, cannot_link, verbose=verbose)
 
             # Update centroids
             new_centroids = cls.update_centroids(X, cluster_assignments, k)
@@ -47,7 +47,7 @@ class CopKMean(SemiSupervisedClustering):
         return cluster_assignments, centroids
 
     @classmethod
-    def assign_clusters_constrained(cls, X, centroids, must_link, cannot_link):
+    def assign_clusters_constrained(cls, X, centroids, must_link, cannot_link, verbose=False):
         """
         Assign clusters with respect to must-link and cannot-link constraints.
 
@@ -66,7 +66,7 @@ class CopKMean(SemiSupervisedClustering):
         # Calculate distances between each point and each centroid
         distances = euclidean_distances(X, centroids)
 
-        for i in tqdm(range(n_samples), desc="assign cluster index"):
+        for i in tqdm(range(n_samples), desc="assign cluster index", disable=not verbose):
             # Find the closest centroid
             closest_centroids = np.argsort(distances[i])
 
@@ -104,6 +104,58 @@ class CopKMean(SemiSupervisedClustering):
                 centroids[cluster_idx] = np.mean(cluster_points, axis=0)
 
         return centroids
+
+
+class CopKMean2(CopKMean):
+    """
+    needs less RAM. (in case X is too big)
+
+    """
+
+    def assign_clusters_constrained(cls, X, centroids, must_link, cannot_link, verbose=False):
+        """
+        Assign clusters with respect to must-link and cannot-link constraints.
+
+        Parameters:
+        X (numpy.ndarray): Data points.
+        centroids (numpy.ndarray): Current centroids.
+        must_link (dict): Dictionary of must-link constraints.
+        cannot_link (dict): Dictionary of cannot-link constraints.
+
+        Returns:
+        numpy.ndarray: Cluster assignments.
+        """
+        n_samples = X.shape[0]
+        assignments = np.zeros(n_samples, dtype=int)
+
+        for i in tqdm(range(n_samples), desc="Assign cluster index", disabel=not verbose):
+            # Calculate distances for the current point to all centroids
+            distances_to_centroids = np.linalg.norm(X[i] - centroids, axis=1)
+
+            # Sort centroids by distance
+            closest_centroids = np.argsort(distances_to_centroids)
+
+            for centroid_index in closest_centroids:
+                can_assign = True
+
+                # Check must-link constraints
+                if i in must_link:
+                    linked_points = must_link[i]
+                    if not all(assignments[j] == centroid_index or assignments[j] == 0 for j in linked_points):
+                        can_assign = False
+
+                # Check cannot-link constraints
+                if can_assign and i in cannot_link:
+                    linked_points = cannot_link[i]
+                    if any(assignments[j] == centroid_index for j in linked_points):
+                        can_assign = False
+
+                # Assign to the closest valid centroid
+                if can_assign:
+                    assignments[i] = centroid_index
+                    break
+
+        return assignments
 
 
 class CopKMean_Behrouz(SemiSupervisedClustering):
@@ -158,11 +210,11 @@ class CopKMean_Behrouz(SemiSupervisedClustering):
         return cluster_assignments, centroids
 
     @classmethod
-    def assign_clusters_constrained(cls, X, centroids, must_link, cannot_link):
+    def assign_clusters_constrained(cls, X, centroids, must_link, cannot_link, verbose=False):
         centroids_np = np.array(centroids)
         cluster_assignments = np.full(len(X), -1, dtype=int)
 
-        for i, data_point in tqdm(enumerate(X), desc="assign cluster index", total=len(X)):
+        for i, data_point in tqdm(enumerate(X), desc="assign cluster index", total=len(X), disable=not verbose):
             if cluster_assignments[i] != -1:
                 continue
 
@@ -232,7 +284,7 @@ class CopKMean_Behrouz(SemiSupervisedClustering):
         return False
 
     @classmethod
-    def grouping_points_with_must_link(cls, must_link, X):
+    def grouping_points_with_must_link(cls, must_link, X, verbose=False):
         """
         End result:
             groups = [[0, 1], [3], [4]]
@@ -246,7 +298,7 @@ class CopKMean_Behrouz(SemiSupervisedClustering):
         ungrouped_flags = np.ones(n_samples, dtype=bool)
 
         groups = []
-        for i in tqdm(range(n_samples), desc="scan all points for grouping"):
+        for i in tqdm(range(n_samples), desc="scan all points for grouping", disabel=not verbose):
             if not ungrouped_flags[i]:
                 continue
             group = list(must_link[i] | {i})
@@ -260,7 +312,7 @@ class CopKMean_Behrouz(SemiSupervisedClustering):
         return groups, group_scores, group_centroids
 
     @classmethod
-    def label_to_constraints(cls, label_indices, n_samples):
+    def labels_to_constraints(cls, label_indices, n_samples):
         """
 
         :param label_indices: eg. [0, 0, 0, 1, 1, 2, 2]
@@ -275,7 +327,7 @@ class CopKMean_Behrouz(SemiSupervisedClustering):
                         5: {0, 1, 2, 3, 4},
                         6: {0, 1, 2, 3, 4}})
         """
-        must_link, cannot_link = super().label_to_constraints(label_indices)
+        must_link, cannot_link = super().labels_to_constraints(label_indices)
         for i in range(len(label_indices), n_samples):
             must_link.update({i: set()})
             cannot_link.update({i: set()})
