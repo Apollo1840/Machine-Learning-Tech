@@ -136,4 +136,4 @@ if __name__ == "__main__":
             accs_round.append(clustering_accuracy(label_assignments, cluster_assignments))
         accs.append(accs_round)
 
-    plot_clustering_accs(accs)
+    plot_clustering_accs(accs, percentages)
