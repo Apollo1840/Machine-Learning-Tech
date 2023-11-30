@@ -20,6 +20,9 @@ def load_data(dataset="mnist", reshape=False, categorical=False, n_samples=6000)
         (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
     elif dataset == "cifar10":
         (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+        x_train = x_train[10:, :]
+        y_train = y_train[10:, 0]
+        y_test = y_test[:, 0]
     else:
         (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
 
@@ -37,17 +40,16 @@ def load_data(dataset="mnist", reshape=False, categorical=False, n_samples=6000)
     if categorical:
         # Convert class vectors to binary class matrices (one-hot encoding)
         y_train = to_categorical(y_train, 10)
-
         y_test = to_categorical(y_test, 10)
 
-    if n_samples is not None:
-        # Limit the number of samples if n_samples is specified
-        x_train = x_train[:n_samples, :]
-        x_test = x_test[:n_samples, :]
-        y_train = y_train[:n_samples]
-        y_test = y_test[:n_samples]
+    if n_samples is not None and n_samples < x_train.shape[0]:
+        # Randomly sample n_samples from the datasets
+        train_indices = np.random.choice(x_train.shape[0], n_samples, replace=False)
+        x_train = x_train[train_indices, :]
+        y_train = y_train[train_indices]
 
     return x_train, y_train, x_test, y_test
+
 
 def prepare_labeled_data(x_train, y_train, percentage, sort=True):
     """

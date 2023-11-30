@@ -30,52 +30,49 @@ def plot_multi_method_accs(methods_accs, percentages, method_names):
     plt.show()
 
 
+def fit_method(method, X, labeled_data, labeled_labels, unlabeled_data, unlabeled_labels):
+    if method is SemiSupervisedGMM:
+        model = method(n_components=len(set(labeled_labels)))
+        model.fit(X, labeled_data, labeled_labels)
+    elif method is CopKMean:
+        model = method(n_components=len(set(labeled_labels)))
+        model.fit(X, labeled_labels)
+    elif method is LabelPropagation:
+        model = method()
+        model.fit(X, np.concatenate((labeled_labels, [-1] * len(unlabeled_labels))))
+    else:  # SVM
+        model = method()
+        model.fit(labeled_data, labeled_labels)
+    return model
+
+
 if __name__ == "__main__":
-    # Prepare the MNIST data
     x_train, y_train, x_test, y_test = load_data()
     percentages = [0.02, 0.05, 0.1, 0.2, 0.5]
     rounds = 5
 
-    # Initialize the main list to store accuracies of all methods
+    methods = {
+        "SemiSupervisedGMM": SemiSupervisedGMM,
+        "LabelPropagation": LabelPropagation,
+        "SVC": SVC,
+        "CopKMean": CopKMean,
+    }
+
     methods_accs = []
-
-    # List of methods
-    methods = [SemiSupervisedGMM, CopKMean, LabelPropagation, SVC]
-
-    for Method in tqdm(methods, desc="methods"):
+    for Method in tqdm(methods.values(), desc="methods"):
         accs = []  # Temporarily store accuracies for the current method
         for percentage in tqdm(percentages, desc=">> percentages"):
+            # Prepare labeled and unlabeled data
+            labeled_data, labeled_labels, unlabeled_data, unlabeled_labels = prepare_labeled_data(
+                x_train, y_train, percentage=percentage)
+            X = np.concatenate((labeled_data, unlabeled_data), axis=0)
+
             accs_round = []
             for _ in tqdm(range(rounds), desc="rounds"):
-                # Prepare labeled and unlabeled data
-                labeled_data, labeled_labels, unlabeled_data, unlabeled_labels = prepare_labeled_data(
-                    x_train, y_train, percentage=percentage)
-                X = np.concatenate((labeled_data, unlabeled_data), axis=0)
-                label_assignments = list(labeled_labels) + list(unlabeled_labels)
-
-                if Method is SemiSupervisedGMM:
-                    model = Method(n_components=10)
-                    model.fit(X, labeled_data, labeled_labels)
-                elif Method is CopKMean:
-                    model = Method(n_components=10)
-                    model.fit(X, labeled_labels)
-                elif Method is LabelPropagation:
-                    model = Method()
-                    model.fit(X, np.concatenate((labeled_labels, [-1] * len(unlabeled_labels))))
-                else:  # SVM
-                    model = Method()
-                    model.fit(labeled_data, labeled_labels)
-
-                # Predict cluster assignments
+                model = fit_method(Method, X, labeled_data, labeled_labels, unlabeled_data, unlabeled_labels)
                 cluster_assignments = model.predict(X)
-
-                # Calculate and append accuracy
-                accs_round.append(clustering_accuracy(label_assignments, cluster_assignments))
-
+                accs_round.append(clustering_accuracy(unlabeled_labels, cluster_assignments[len(labeled_labels):]))
             accs.append(accs_round)
-
-        # Append the accuracies of the current method to the main list
         methods_accs.append(accs)
 
-    method_names = ['SemiSupervisedGMM', 'CopKMean', 'LabelPropagation', 'SVC']
-    plot_multi_method_accs(methods_accs, percentages, method_names)
+    plot_multi_method_accs(methods_accs, percentages, methods.keys())
