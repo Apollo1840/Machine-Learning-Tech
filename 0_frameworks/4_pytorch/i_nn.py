@@ -2,7 +2,6 @@ from tqdm import tqdm
 
 import torch
 from torch import nn
-import torch.nn.functional as F
 
 from material.data import fmnist_datagen
 
@@ -20,7 +19,6 @@ class NeuralNetwork(nn.Module):
             nn.Linear(512, 10),
             nn.ReLU()
         )
-        self.softmax = F.log_softmax
 
         # loss and optimizer
         self.loss = nn.CrossEntropyLoss()
@@ -28,8 +26,7 @@ class NeuralNetwork(nn.Module):
 
     def forward(self, x):
         x = self.flatten(x)
-        logits = self.linear_relu_stack(x)
-        y = self.softmax(logits, dim=1)
+        y = self.linear_relu_stack(x)
         return y
 
 
@@ -43,7 +40,7 @@ class PytorchNN(NeuralNetwork):
             print(f"Epoch {t + 1}\n-------------------------------")
 
             for x, y in tqdm(datagen, total=len(datagen)):
-                self.backprop(x, y)
+                self.train_step(x, y)
 
             self.eval_datagen(datagen)
 
@@ -74,7 +71,7 @@ class PytorchNN(NeuralNetwork):
         return y_pred
 
     # helper functions
-    def backprop(self, x, y):
+    def train_step(self, x, y):
         """
         Backpropagation
 
@@ -84,16 +81,19 @@ class PytorchNN(NeuralNetwork):
         :param: y: y_batch
         """
 
-        # 1) clear gradient:
+        # 1) clear previous gradient:
         self.optimizer.zero_grad()
 
         # 2) calculate the gradient:
         y_pred = self(x)
-        self.loss(y_pred, y).backward()
-        # regularly (y_pred, y) are called: (outputs, labels)
+        loss = self.loss(y_pred, y)
+        loss.backward()
+        # regularly (y_pred, y) are also called: (output, target)
 
         # 3) update the paramters:
         self.optimizer.step()
+
+        return self.loss.item()
 
 
 if __name__ == '__main__':

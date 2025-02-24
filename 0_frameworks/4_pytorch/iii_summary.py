@@ -17,11 +17,18 @@ class PytorchNNPro(PytorchNN):
         summary(self, input_shape)
 
     def save(self, filename):
+        """
+        When saving model, it is recommended to save the model weights only for better flexibility.
+
+        you can also save/load the optimizer status dict for continuing the training.
+        """
+
         torch.save(self.state_dict(), filename)
 
     @classmethod
     def load(cls, filename):
-        return torch.load(filename)
+        model = cls()
+        return model.load_state_dict(torch.load(filename))
 
 
 if __name__ == '__main__':

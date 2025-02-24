@@ -37,7 +37,7 @@ print(out_y)
 target = torch.tensor(np.random.randn(1, 10), dtype=torch.float)
 
 # train the model
-# create your optimizer
+# create your optimizer, connect Knowledge(parameters) to the optimizer
 optimizer = optim.SGD(net.parameters(), lr=0.01)
 
 # before training in one batch

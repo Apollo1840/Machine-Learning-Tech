@@ -20,7 +20,7 @@ class MyLinearLayer(nn.Module):
         self.size_in, self.size_out = size_in, size_out
 
         # require grad is default set to True
-        # nn.Parameter is a Tensor that's a module parameter.
+        # nn.Parameter create gradient for the tensor and register this tensor to the model.
         weights = torch.Tensor(size_out, size_in)
         self.weights = nn.Parameter(weights)
 
