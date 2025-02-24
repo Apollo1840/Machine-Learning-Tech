@@ -92,10 +92,32 @@ x = torch.randn(32, 100, 256)  # (batch_size, sequence_length, embedding_dim)
 # LSTM expects input of shape (sequence_length, batch_size, embedding_dim)
 lstm_input = x.transpose(0, 1)
 
-x = torch.randn(32, 8, 128, 128)  # (batch_size, heads, height, width)
+x = torch.randn(32, 8, 128)  # (batch_size, heads, d_model)
 
-# MHA often require (heads, batch_size, height, width)
-x = x.permute(1, 0, 2, 3)
+# MHA often require (heads, batch_size, d_model)
+x = x.permute(1, 0, 2)
+
+
+"""
+Example:
+
+- We have same shape of projected query, key and value (batch_size, seq_len, d_model), where d_model = d_k * n_heads.
+- We have self-attention layer which takes (.., seq_len, d_k) shape tensor as inputs and output the same.
+- We want (batch_size, seq_len, d_model) as output.
+
+How do we implement this? do not explicitly use seq_len.
+
+"""
+
+x = torch.randn(32, 100, 256)  # d_k = 64, n_heads = 4
+attn_layer = nn.Linear(64, 64)
+
+x = x.view(32, -1, 4, 64)   # split the d_model dimension
+x = x.transpose(1, 2)       # raise n_heads dimension up
+y = attn_layer(x)
+y = y.transpose(1, 2)       # take n_heads dimension back, now we have (batch_size, seq_len, num_heads, d_model)
+y = y.contiguous().view(32, -1, 256)   # apply contiguous after transpose, so that we can use view to reshape it.
+
 
 # ----------------------------------------------------------------
 # Common torch operations: Joint
