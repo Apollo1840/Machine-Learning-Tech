@@ -2,6 +2,9 @@
 This script guides through:
 - Common sub-modules
 - Common torch operations
+    - reshape (Magic Cube)
+    - joint
+    - calculation (Linear algebra)
 """
 import torch
 import torch.nn as nn
@@ -71,6 +74,10 @@ loss = nn.MSELoss()(x.squeeze(1), y)
 img = torch.randn(64, 28, 28)  # (batch_size, height, width)
 x = img.unsqueeze(1)
 
+# NOTE: The Boardcasting is from last dimension of the second input,
+# if it is matched, then go forward, it is 1, raise to match.
+# example: A.shape = (64, 100, 8), B.shape = (100, 1), A + B shape is (64, 100, 8)
+
 """
 Magic Cube 3
 
@@ -89,6 +96,26 @@ x = torch.randn(32, 8, 128, 128)  # (batch_size, heads, height, width)
 
 # MHA often require (heads, batch_size, height, width)
 x = x.permute(1, 0, 2, 3)
+
+# ----------------------------------------------------------------
+# Common torch operations: Joint
+
+# Concatenate
+result = torch.cat((x, x, x), dim=0)
+
+# repeat
+# dims: A tuple of integers specifying the number of times to repeat along each dimension.
+x = torch.tensor([1, 2, 3])
+result = torch.tile(x, dims=(3,))  # Repeat 3 times along the only dimension
+
+x = torch.tensor([[1, 2],
+                  [3, 4]])
+
+result = torch.tile(x, dims=(2, 3))  # Repeat 2 times along rows, 3 times along columns
+
+# boardcasting
+x = torch.tensor([1, 2, 3])  # Shape: (3,)
+result = x.expand(4, 3)  # Repeat along dim 0
 
 
 # ----------------------------------------------------------------
