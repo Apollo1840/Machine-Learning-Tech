@@ -9,7 +9,6 @@ Just like build a model, you just need build a nn.Module
 import math
 import torch
 import torch.nn as nn
-import numpy as np
 
 
 class MyLinearLayer(nn.Module):
@@ -50,29 +49,6 @@ class BasicModel(nn.Module):
         return y
 
 
-"""
-Torch operations:
-    
-    elementwise_add:    torch.add or +
-    elementwise_mul:    torch.mul or *
-    elementwise_div:    torch.div or /
-    power:              torch.pow, torch.exp
-    matmul:             torch.mm
-    max:                torch.amax
-    reshape:            torch.view, torch.squeeze
-    transpose:          torch.transpose(input, dim0, dim1)
-                        torch.permute()
-    
-    relu:               F.relu
-    
-useful sublayer:
-    nn.flatten
-    
-    
-
-"""
-
-
 class TimeDistributed(nn.Module):
     def __init__(self, module):
         super(TimeDistributed, self).__init__()
@@ -90,3 +66,11 @@ class TimeDistributed(nn.Module):
         y = y.contiguous().view(x.size(0), -1, y.size(-1))  # (samples, timesteps, output_size)
 
         return y
+
+
+
+"""
+
+in order to implement more custom layers, you need to master torch operations: see `viii_torch_operations.md`
+
+"""

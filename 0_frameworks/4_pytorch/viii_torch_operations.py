@@ -5,6 +5,7 @@ This script guides through:
     - reshape (Magic Cube)
     - joint
     - calculation (Linear algebra)
+    - statistical
 """
 import torch
 import torch.nn as nn
@@ -152,9 +153,8 @@ Torch operations:
     elementwise_div:    torch.div or /
     elementwise_power:  torch.pow, torch.exp
     
-    max:                torch.amax
-    
     matmul:             torch.mm
+    
     einsum:             torch.einsum
                         
 """
@@ -192,8 +192,17 @@ b = torch.tensor([[5, 6], [7, 8]])
 result = torch.einsum('ij,jk->ik', a, b)  # Tensor([[19, 22], [43, 50]])
 
 
+# ----------------------------------------------------------------
+# Common torch operations: Statistics
 
+"""
 
+Torch operations:
+
+    mean:               torch.mean
+    std:                torch.std
+    max:                torch.amax; torch.amin
+"""
 
 
 

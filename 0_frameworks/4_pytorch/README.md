@@ -19,6 +19,8 @@ install:
 10. multiple GPU, device control (x)
 11. learn tricks from others repo. (t_*)
 
+(Suggestion: prefer to read `.ipynb` than `.py`.)
+
 ## tricks
 
 ### load_data
@@ -42,7 +44,9 @@ Use autocast while computing the loss with increase speed.
 
 
 ### larger batch_size when RAM is not enough.
-The trick is very simple. Just zero your gradient not after each batch, but some batch.
+The trick is very simple. Just zero your gradient NOT after each batch, but some batch.
+
+(Note: The effect is NOT exact same to larger batch_size)
 
 ```python
     # increase batch_size 8x
@@ -78,3 +82,5 @@ https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html
   - https://github.com/pytorch/examples
 - custom layer: https://pytorch.org/tutorials/beginner/examples_nn/two_layer_net_module.html
 - basic operations : https://jhui.github.io/2018/02/09/PyTorch-Basic-operations/
+
+# Pytorch-Lighting
