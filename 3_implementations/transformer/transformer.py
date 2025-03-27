@@ -1,5 +1,7 @@
 """
-see https://github.com/Apollo1840/transformer/tree/main for complete implementation.
+reference:
+- Introduction (including illustration): https://docs.google.com/presentation/d/1uDqKkrXPaOFeKrQXSwY7KXhvx2aVZ07x3pVVM4OVfH8/edit
+- Complete implementation:  https://github.com/Apollo1840/transformer/tree/main
 
 used torch operations:
 - torch.tensor
