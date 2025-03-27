@@ -1,5 +1,8 @@
 """
 https://pytorch.org/tutorials/beginner/transformer_tutorial.html
+
+If you care about implementation from scratch, see `../3_implementations/transformer/transformer.py`.
+
 """
 
 import math
