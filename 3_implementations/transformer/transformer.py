@@ -3,6 +3,8 @@ reference:
 - Introduction (including illustration): https://docs.google.com/presentation/d/1uDqKkrXPaOFeKrQXSwY7KXhvx2aVZ07x3pVVM4OVfH8/edit
 - Complete implementation:  https://github.com/Apollo1840/transformer/tree/main
 
+(P.S this implementation does not include positional encoding & masking for simplicity)
+
 used torch operations:
 - torch.tensor
 - torch.matmul
@@ -10,7 +12,7 @@ used torch operations:
 
 - ().view()
 - ().transpose()
-- ().contiguous()
+- ().transpose().contiguous().view()
 
 - F.softmax
 
@@ -30,7 +32,7 @@ class ScaledDotAttention(nn.Module):
 
     def __init__(self, d_k):
         super(ScaledDotAttention, self).__init__()
-        self.d_k = d_k
+        self.d_k = torch.tensor(self.d_k, dtype=torch.float32)  # change it to tensor because it will be used in division.
 
     def forward(self, q, k, v):
         """
@@ -46,13 +48,13 @@ class ScaledDotAttention(nn.Module):
             Tuple[Tensor, Tensor]: The output tensor and the attention weights.
             output attention_weights for analysis/visualization purposes.
         """
-        scores = torch.matmul(q, k.transpose(-2, -1)) / torch.sqrt(torch.tensor(self.d_k, dtype=torch.float32))
+        scores = torch.matmul(q, k.transpose(-2, -1)) / torch.sqrt(self.d_k)
 
         attention_weights = F.softmax(scores, dim=-1)
 
         output = torch.matmul(attention_weights, v)
 
-        return output, attention_weights
+        return output
 
 
 class MultiHeadAttention(nn.Module):
@@ -76,16 +78,13 @@ class MultiHeadAttention(nn.Module):
         self.d_v = self.d_k  # based on the paper 'attention is all you need'.
 
         # Learnable projection layers for queries, keys, and values
-        self.q_proj = nn.Linear(d_model, d_model)
-        self.k_proj = nn.Linear(d_model, d_model)
-        self.v_proj = nn.Linear(d_model, self.d_v * self.num_heads)  # d_model == self.d_v * self.num_heads
+        self.q_proj = nn.Linear(d_model, self.d_k * self.num_heads)
+        self.k_proj = nn.Linear(d_model, self.d_k * self.num_heads)
+        self.v_proj = nn.Linear(d_model, self.d_v * self.num_heads)  
 
         # Linear layer for final output
-        self.out_proj = nn.Linear(self.d_v * self.num_heads, d_model)  # d_model == self.d_v * self.num_heads
-
+        self.out_proj = nn.Linear(self.d_v * self.num_heads, d_model)  
         self.attn = ScaledDotAttention(self.d_k)
-
-        self.attention_scores = None  # Store attention weights for visualization
 
     def forward(self, query, key, value):
         """
@@ -102,18 +101,15 @@ class MultiHeadAttention(nn.Module):
         batch_size = query.size(0)
 
         # Project inputs to multi-head space
-        Q = self.q_proj(query).view(batch_size, -1, self.num_heads, self.d_k).transpose(1, 2)
-        K = self.k_proj(key).view(batch_size, -1, self.num_heads, self.d_k).transpose(1, 2)
-        V = self.v_proj(value).view(batch_size, -1, self.num_heads, self.d_v).transpose(1, 2)
+        Q = self.q_proj(query).view(batch_size, -1, self.num_heads, self.d_k).transpose(-3, -2)
+        K = self.k_proj(key).view(batch_size, -1, self.num_heads, self.d_k).transpose(-3, -2)
+        V = self.v_proj(value).view(batch_size, -1, self.num_heads, self.d_v).transpose(-3, -2)
 
         # Scaled dot-product attention
-        attn_output, attention_weights = self.attn(Q, K, V)
-
-        # Store attention weights for later visualization
-        self.attention_scores = attention_weights.detach()  # Detach to avoid gradients
+        attn_output = self.attn(Q, K, V)
 
         # Concatenate heads and project to output space
-        attn_output = attn_output.transpose(1, 2).contiguous().view(batch_size, -1, self.d_v * self.num_heads)
+        attn_output = attn_output.transpose(-3, -2).contiguous().view(batch_size, -1, self.d_v * self.num_heads)
         output = self.out_proj(attn_output)
 
         return output
